@@ -18,13 +18,7 @@ const client = new Client({
   ]
 });
 
-// ❗ التوكن من Railway فقط
 const TOKEN = process.env.TOKEN;
-
-if (!TOKEN) {
-  console.error("❌ مافيه توكن في Railway (Variables)");
-  process.exit(1);
-}
 
 // 🎭 الرول
 const STAFF_ROLE = "1475334752436359320";
@@ -38,15 +32,20 @@ const categories = {
   suggest: "1489854304851464292"
 };
 
-// 📜 اللوق
-const LOG_CHANNEL = "1489840541247213781";
+// 📝 أسماء عربية
+const categoryNames = {
+  support: "الدعم الفني",
+  questions: "الاستفسارات",
+  complaints: "الشكاوي",
+  admin: "تقديم الإدارة",
+  suggest: "الاقتراحات"
+};
 
 let ticketCounter = 1;
 
 client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
 });
-
 
 // 📌 بانل
 client.on("messageCreate", async (msg) => {
@@ -57,14 +56,13 @@ client.on("messageCreate", async (msg) => {
       .setTitle("📩 نظام التذاكر")
       .setDescription(`
 📩 الدعم الفني  
-⛔ الشكاوي  
+🚫 الشكاوي  
 ❓ الاستفسارات  
 📝 تقديم الإدارة  
-💼 الاقتراحات  
+💡 الاقتراحات  
 
 👇 اختر نوع التذكرة
-`)
-      .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
+`);
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId("support").setLabel("الدعم الفني").setStyle(ButtonStyle.Primary),
@@ -82,7 +80,6 @@ client.on("messageCreate", async (msg) => {
 // 🎟️ التفاعل
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-
     if (!interaction.isButton()) return;
 
     // 🎟️ إنشاء تذكرة
@@ -111,7 +108,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           { name: "🛡️ مشرفي التذاكر:", value: `<@&${STAFF_ROLE}>` },
           { name: "📅 تاريخ التذكرة:", value: `<t:${Math.floor(Date.now()/1000)}:F>` },
           { name: "🔢 رقم التذكرة:", value: `${number}` },
-          { name: "📁 قسم التذكرة:", value: `${interaction.customId}` },
+          { name: "📁 قسم التذكرة:", value: `${categoryNames[interaction.customId]}` },
           { name: "━━━━━━━━━━━━━━", value: "✍️ الرجاء كتابة مشكلتك أو طلبك بالتفصيل\nوسيتم الرد عليك في أقرب وقت" }
         );
 
@@ -126,11 +123,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
 
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
-
-      const log = client.channels.cache.get(LOG_CHANNEL);
-      if (log) {
-        log.send(`📂 تم فتح تذكرة بواسطة ${interaction.user}`);
-      }
     }
 
     // 🔒 إغلاق
@@ -139,7 +131,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const ch = interaction.channel;
       const userId = ch.topic;
 
-      await ch.permissionOverwrites.edit(userId, { SendMessages: false });
+      await ch.permissionOverwrites.edit(userId, {
+        ViewChannel: true,
+        SendMessages: false
+      });
+
       await ch.setName(`🔒・${ch.name.replace("🎟️・", "")}`);
 
       const open = new ButtonBuilder()
@@ -157,20 +153,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
         embeds: [],
         components: [new ActionRowBuilder().addComponents(open, del)]
       });
-
-      const log = client.channels.cache.get(LOG_CHANNEL);
-      if (log) {
-        log.send(`🔒 تم إغلاق تذكرة بواسطة ${interaction.user}`);
-      }
     }
 
-    // 🔓 فتح
+    // 🔓 فتح (تم إصلاحه)
     if (interaction.customId === "open") {
 
       const ch = interaction.channel;
       const userId = ch.topic;
 
-      await ch.permissionOverwrites.edit(userId, { SendMessages: true });
+      await ch.permissionOverwrites.edit(userId, {
+        ViewChannel: true,
+        SendMessages: true
+      });
+
       await ch.setName(`🎟️・${ch.name.replace("🔒・", "")}`);
 
       const close = new ButtonBuilder()
@@ -179,7 +174,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setStyle(ButtonStyle.Danger);
 
       await interaction.update({
-        content: "🎫 تم فتح التذكرة",
+        content: "",
         components: [new ActionRowBuilder().addComponents(close)]
       });
     }
@@ -195,7 +190,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// حماية
 process.on("uncaughtException", err => console.error(err));
 process.on("unhandledRejection", err => console.error(err));
 
