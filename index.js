@@ -152,15 +152,36 @@ client.on(Events.InteractionCreate, async (interaction) => {
     ],
   });
 
-  const embed = new EmbedBuilder()
-    .setTitle("🎫 تذكرة جديدة")
-    .setDescription(`
-👤 صاحب التذكرة: ${interaction.user}
+  const now = new Date();
 
-🔢 رقم التذكرة: ${number}
+const embed = new EmbedBuilder()
+  .setColor("#2b2d31")
+  .setTitle("🎫 | معلومات التذكرة")
+  .setDescription(`
+👤 **مالك التذكرة:**
+${interaction.user}
 
-📌 اكتب تفاصيلك هنا وسيتم الرد عليك
-    `);
+🛡️ **مشرفي التذاكر:**
+<@&${ADMIN_ROLE}>
+
+📅 **تاريخ التذكرة:**
+<t:${Math.floor(now.getTime() / 1000)}:F>
+
+🔢 **رقم التذكرة:**
+${number}
+
+📂 **قسم التذكرة:**
+${type === "support" ? "الدعم الفني" :
+type === "complaint" ? "الشكاوي" :
+type === "question" ? "الاستفسارات" :
+type === "admin" ? "تقديم الإدارة" :
+"الاقتراحات"}
+
+━━━━━━━━━━━━━━━━━━
+
+✍️ الرجاء كتابة مشكلتك أو طلبك بالتفصيل
+وسيتم الرد عليك في أقرب وقت
+`);
 
   const closeBtn = new ButtonBuilder()
     .setCustomId("close")
