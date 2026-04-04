@@ -105,7 +105,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       channel.setTopic(interaction.user.id);
 
-      // 🔥 Embed التذكرة (رجعناه زي قبل)
       const embed = new EmbedBuilder()
         .setColor("#2b2d31")
         .setTitle("📂 معلومات التذكرة")
@@ -135,7 +134,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setColor("#2b2d31")
               .setTitle("📁 TITANIUM")
               .setDescription(
-                `📩 تم فتح التذكرة\n\n👤 ${interaction.user}\n📁 ${categoryNames[type]}\n🔢 ${number}\n\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
+                `📩 تم فتح التذكرة\n\n` +
+                `👤 بواسطة: ${interaction.user}\n` +
+                `📁 ${categoryNames[type]}\n` +
+                `🎫 تذكرة-${number}\n\n` +
+                `📅 <t:${Math.floor(Date.now()/1000)}:F>`
               )
           ]
         });
@@ -146,7 +149,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 📌 استلام (Embed مرتب)
+    // 📌 استلام
     if (interaction.isButton() && interaction.customId === "claim") {
 
       const ch = interaction.channel;
@@ -157,8 +160,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       claimedTickets[ch.id] = interaction.user;
 
-      const log = client.channels.cache.get(LOG_CHANNEL);
-
       if (log) {
         log.send({
           embeds: [
@@ -166,7 +167,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setColor("#2b2d31")
               .setTitle("📁 TITANIUM | استلام")
               .setDescription(
-                `📌 تم استلام التذكرة\n\n👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
+                `📌 تم استلام التذكرة\n\n` +
+                `👤 بواسطة: ${interaction.user}\n` +
+                `🎫 ${ch.name}\n` +
+                `📅 <t:${Math.floor(Date.now()/1000)}:F>`
               )
           ]
         });
@@ -175,11 +179,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `📌 تم استلام التذكرة بواسطة ${interaction.user}` });
     }
 
-    // 🔒🔓 (تحديث نفس رسالة اللوق)
+    // 🔒🔓 إغلاق / فتح
     if (interaction.isButton() && interaction.customId === "toggle") {
 
       const ch = interaction.channel;
-      const log = client.channels.cache.get(LOG_CHANNEL);
       const msgId = logMessages[ch.id];
 
       if (!log || !msgId) return;
@@ -199,7 +202,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setColor("#2b2d31")
               .setTitle("📁 TITANIUM")
               .setDescription(
-                `🔒 تم إغلاق التذكرة\n\n👤 ${interaction.user}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
+                `🔒 تم إغلاق التذكرة\n\n` +
+                `👤 بواسطة: ${interaction.user}\n` +
+                `🎫 ${ch.name}\n` +
+                `📅 <t:${Math.floor(Date.now()/1000)}:F>`
               )
           ]
         });
@@ -218,7 +224,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setColor("#2b2d31")
               .setTitle("📁 TITANIUM")
               .setDescription(
-                `🔓 تم فتح التذكرة\n\n👤 ${interaction.user}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
+                `🔓 تم فتح التذكرة\n\n` +
+                `👤 بواسطة: ${interaction.user}\n` +
+                `🎫 ${ch.name}\n` +
+                `📅 <t:${Math.floor(Date.now()/1000)}:F>`
               )
           ]
         });
