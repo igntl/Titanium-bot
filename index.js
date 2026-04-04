@@ -15,6 +15,7 @@ const client = new Client({
   ]
 });
 
+// حط ID الروم الصوتي هنا فقط
 const TARGET_CHANNEL_ID = "1475334190034587661";
 
 let isPlaying = false;
@@ -40,7 +41,12 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
       await entersState(connection, VoiceConnectionStatus.Ready, 5000);
 
       const player = createAudioPlayer();
-      const resource = createAudioResource('./welcome.mp3');
+
+      const resource = createAudioResource('./welcome.mp3', {
+        inlineVolume: true
+      });
+
+      resource.volume.setVolume(1);
 
       player.play(resource);
       connection.subscribe(player);
