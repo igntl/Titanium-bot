@@ -22,6 +22,7 @@ const client = new Client({
 const TOKEN = process.env.TOKEN;
 
 const STAFF_ROLE = "1475334752436359320";
+const LOG_CHANNEL = "1489840541247213781";
 
 const categories = {
   support: "1489844874948907108",
@@ -39,10 +40,8 @@ const categoryNames = {
   suggest: "💡 الاقتراحات"
 };
 
-const LOG_CHANNEL = "1489840541247213781";
-
 let ticketCounter = 1;
-let claimedTickets = {}; // 📌 تخزين المستلمين
+let claimedTickets = {};
 
 client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
@@ -89,6 +88,8 @@ client.on("messageCreate", async (msg) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
 
+    const log = client.channels.cache.get(LOG_CHANNEL);
+
     // 📩 إنشاء تذكرة
     if (interaction.isStringSelectMenu()) {
 
@@ -129,6 +130,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await channel.send({ embeds: [embed], components: [row] });
 
+      // 📜 لوق فتح
+      if (log) {
+        log.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#2b2d31")
+              .setTitle("📁 TITANIUM | فتح تذكرة")
+              .setDescription(
+                `👤 ${interaction.user}\n` +
+                `📁 ${categoryNames[type]}\n` +
+                `🔢 ${number}\n` +
+                `📅 <t:${Math.floor(Date.now()/1000)}:F>`
+              )
+          ]
+        });
+      }
+
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
@@ -139,21 +157,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (claimedTickets[ch.id]) {
         return interaction.reply({
-          content: `❌ التذكرة مستلمة بالفعل من ${claimedTickets[ch.id]}`,
+          content: `❌ مستلمة من ${claimedTickets[ch.id]}`,
           ephemeral: true
         });
       }
 
       claimedTickets[ch.id] = interaction.user;
 
-      const log = client.channels.cache.get(LOG_CHANNEL);
       if (log) {
-        log.send(`📌 تم استلام التذكرة بواسطة ${interaction.user}`);
+        log.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#2b2d31")
+              .setTitle("📁 TITANIUM | استلام")
+              .setDescription(
+                `👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
+              )
+          ]
+        });
       }
 
-      await interaction.reply({
-        content: `📌 تم استلام التذكرة بواسطة ${interaction.user}`
-      });
+      await interaction.reply({ content: `📌 تم الاستلام بواسطة ${interaction.user}` });
     }
 
     // 🔒🔓
@@ -170,10 +194,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const num = ch.name.replace("🎫・تذكرة-", "");
         await ch.setName(`🔒・تذكرة-${num}`);
 
-        await interaction.update({
-          content: "🔒 تم الإغلاق",
-          components: interaction.message.components
-        });
+        if (log) {
+          log.send({ embeds: [new EmbedBuilder()
+            .setColor("#2b2d31")
+            .setTitle("📁 TITANIUM | إغلاق")
+            .setDescription(`👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`)
+          ]});
+        }
+
+        await interaction.update({ content: "🔒 تم الإغلاق", components: interaction.message.components });
 
       } else {
 
@@ -182,10 +211,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const num = ch.name.replace("🔒・تذكرة-", "");
         await ch.setName(`🎫・تذكرة-${num}`);
 
-        await interaction.update({
-          content: "🔓 تم الفتح",
-          components: interaction.message.components
-        });
+        if (log) {
+          log.send({ embeds: [new EmbedBuilder()
+            .setColor("#2b2d31")
+            .setTitle("📁 TITANIUM | فتح")
+            .setDescription(`👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`)
+          ]});
+        }
+
+        await interaction.update({ content: "🔓 تم الفتح", components: interaction.message.components });
       }
     }
 
@@ -198,6 +232,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
   } catch (err) {
     console.error(err);
   }
+});
+
+
+// 🚨 لوق الأخطاء
+process.on("uncaughtException", async (err) => {
+  const log = client.channels.cache.get(LOG_CHANNEL);
+  if (log) log.send(`❌ ${err.message}`);
+});
+
+process.on("unhandledRejection", async (err) => {
+  const log = client.channels.cache.get(LOG_CHANNEL);
+  if (log) log.send(`❌ ${err}`);
 });
 
 client.login(TOKEN);
