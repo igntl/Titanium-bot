@@ -21,10 +21,8 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-// 🎭 رول الستاف
 const STAFF_ROLE = "1475334752436359320";
 
-// 📁 الكاتقوري
 const categories = {
   support: "1489844874948907108",
   questions: "1489844828404584469",
@@ -33,7 +31,6 @@ const categories = {
   suggest: "1489854304851464292"
 };
 
-// 📝 أسماء عربية
 const categoryNames = {
   support: "📩 الدعم الفني",
   questions: "❓ الاستفسارات",
@@ -42,10 +39,10 @@ const categoryNames = {
   suggest: "💡 الاقتراحات"
 };
 
-// 📜 اللوق
 const LOG_CHANNEL = "1489840541247213781";
 
 let ticketCounter = 1;
+let claimedTickets = {}; // 📌 تخزين المستلمين
 
 client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
@@ -80,9 +77,10 @@ client.on("messageCreate", async (msg) => {
         { label: "الاقتراحات", value: "suggest", emoji: "💡" }
       ]);
 
-    const row = new ActionRowBuilder().addComponents(menu);
-
-    msg.channel.send({ embeds: [embed], components: [row] });
+    msg.channel.send({
+      embeds: [embed],
+      components: [new ActionRowBuilder().addComponents(menu)]
+    });
   }
 });
 
@@ -91,7 +89,7 @@ client.on("messageCreate", async (msg) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
 
-    // 📩 اختيار من القائمة
+    // 📩 إنشاء تذكرة
     if (interaction.isStringSelectMenu()) {
 
       const type = interaction.values[0];
@@ -119,38 +117,50 @@ client.on(Events.InteractionCreate, async (interaction) => {
           { name: "📅 تاريخ التذكرة:", value: `<t:${Math.floor(Date.now()/1000)}:F>` },
           { name: "🔢 رقم التذكرة:", value: `${number}` },
           { name: "📁 قسم التذكرة:", value: `${categoryNames[type]}` },
+          { name: "📌 المستلم:", value: "لا يوجد" },
           { name: "━━━━━━━━━━━━━━", value: "✍️ الرجاء كتابة مشكلتك أو طلبك بالتفصيل\nوسيتم الرد عليك في أقرب وقت" }
         );
 
-      const btn = new ButtonBuilder()
-        .setCustomId("toggle")
-        .setLabel("🔒 إغلاق التذكرة")
-        .setStyle(ButtonStyle.Danger);
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("claim").setLabel("📌 استلام").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("toggle").setLabel("🔒 إغلاق").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("delete").setLabel("🗑️ حذف").setStyle(ButtonStyle.Secondary)
+      );
 
-      await channel.send({
-        embeds: [embed],
-        components: [new ActionRowBuilder().addComponents(btn)]
-      });
+      await channel.send({ embeds: [embed], components: [row] });
 
-      // 📜 لوق فتح
+      await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
+    }
+
+    // 📌 استلام
+    if (interaction.isButton() && interaction.customId === "claim") {
+
+      const ch = interaction.channel;
+
+      if (claimedTickets[ch.id]) {
+        return interaction.reply({
+          content: `❌ التذكرة مستلمة بالفعل من ${claimedTickets[ch.id]}`,
+          ephemeral: true
+        });
+      }
+
+      claimedTickets[ch.id] = interaction.user;
+
       const log = client.channels.cache.get(LOG_CHANNEL);
       if (log) {
-        log.send(`📩 تم فتح تذكرة بواسطة ${interaction.user}`);
+        log.send(`📌 تم استلام التذكرة بواسطة ${interaction.user}`);
       }
 
       await interaction.reply({
-        content: `تم إنشاء التذكرة: ${channel}`,
-        ephemeral: true
+        content: `📌 تم استلام التذكرة بواسطة ${interaction.user}`
       });
     }
 
-    // 🔒🔓 زر واحد
+    // 🔒🔓
     if (interaction.isButton() && interaction.customId === "toggle") {
 
       const ch = interaction.channel;
       const userId = ch.topic;
-      const log = client.channels.cache.get(LOG_CHANNEL);
-
       const isClosed = ch.name.startsWith("🔒");
 
       if (!isClosed) {
@@ -160,16 +170,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const num = ch.name.replace("🎫・تذكرة-", "");
         await ch.setName(`🔒・تذكرة-${num}`);
 
-        const btn = new ButtonBuilder()
-          .setCustomId("toggle")
-          .setLabel("🔓 فتح التذكرة")
-          .setStyle(ButtonStyle.Success);
-
-        if (log) log.send(`🔒 تم إغلاق التذكرة بواسطة ${interaction.user}`);
-
         await interaction.update({
-          content: "🔒 تم إغلاق التذكرة",
-          components: [new ActionRowBuilder().addComponents(btn)]
+          content: "🔒 تم الإغلاق",
+          components: interaction.message.components
         });
 
       } else {
@@ -179,26 +182,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const num = ch.name.replace("🔒・تذكرة-", "");
         await ch.setName(`🎫・تذكرة-${num}`);
 
-        const btn = new ButtonBuilder()
-          .setCustomId("toggle")
-          .setLabel("🔒 إغلاق التذكرة")
-          .setStyle(ButtonStyle.Danger);
-
-        if (log) log.send(`🔓 تم فتح التذكرة بواسطة ${interaction.user}`);
-
         await interaction.update({
-          content: "🎫 تم فتح التذكرة",
-          components: [new ActionRowBuilder().addComponents(btn)]
+          content: "🔓 تم الفتح",
+          components: interaction.message.components
         });
       }
     }
 
+    // 🗑️ حذف
+    if (interaction.isButton() && interaction.customId === "delete") {
+      await interaction.reply({ content: "🗑️ جاري الحذف...", ephemeral: true });
+      setTimeout(() => interaction.channel.delete(), 2000);
+    }
+
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error(err);
   }
 });
-
-process.on("uncaughtException", err => console.error(err));
-process.on("unhandledRejection", err => console.error(err));
 
 client.login(TOKEN);
