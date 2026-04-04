@@ -1,5 +1,5 @@
 {
-  "name": "advanced-ticket-bot",
+  "name": "ticket-bot",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
