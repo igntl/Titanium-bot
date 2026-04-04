@@ -15,7 +15,7 @@ const client = new Client({
 
 // 👇 عدل هنا
 const SUPPORT_ROLE_ID = "1475334752436359320"; // ايدي رتبة الدعم
-const CATEGORY_ID = "1489813663773753527"; // ايدي الكاتيجوري
+const CATEGORY_ID = "1489830376674295991"; // ايدي الكاتيجوري
 
 client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
