@@ -54,7 +54,7 @@ client.on("messageCreate", async (message) => {
 
 اختر نوع التذكرة 👇
       `)
-      .setImage("https://i.imgur.com/8Km9tLL.png");
+      .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489845888342818907/9A6F3045-2E8F-4730-88F7-58002A9A1C0C.jpg?ex=69d1e69b&is=69d0951b&hm=2b24294140e53b65a68e8363563ba43913415372be9e716a62833bd30d3d0d12&");
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId("ticket_select")
