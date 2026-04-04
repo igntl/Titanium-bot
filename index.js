@@ -21,9 +21,9 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-// ✏️ عدل هنا فقط
+// ✅ جاهزة من عندك
 const CATEGORY_ID = "1489830376674295991";
-const SUPPORT_ROLE_ID = "1475334752436359320 ";
+const SUPPORT_ROLE_ID = "1475334752436359320";
 const LOG_CHANNEL_ID = "1489840541247213781";
 
 client.once("ready", () => {
@@ -37,14 +37,14 @@ client.on("messageCreate", async (message) => {
     const embed = new EmbedBuilder()
       .setTitle("📩 نظام التذاكر")
       .setDescription(`
-**🎧 الدعم الفني:** مشاكل السيرفر  
-**⚠️ الشكاوي:** مشكلة مع عضو  
-**❓ الاستفسارات:** سؤال عام  
+🎧 الدعم الفني: مشاكل السيرفر  
+⚠️ الشكاوي: مشكلة مع عضو  
+❓ الاستفسارات: سؤال عام  
 
 اختر نوع التذكرة من القائمة 👇
       `)
       .setColor("#2b2d31")
-      .setImage("https://i.imgur.com/yourimage.png");
+      .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489842642006179901/7FCB9C09-6BA0-4A5B-B6A0-961659BB6B5E.png?ex=69d1e395&is=69d09215&hm=28b044bd0a1e50ea925f323ae5d7c52fe9e02535c0962bc0778dbe6b0c8dc100&");
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId("select_ticket")
@@ -83,14 +83,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
   // 📥 فتح تذكرة
   if (interaction.isStringSelectMenu() && interaction.customId === "select_ticket") {
 
+    await interaction.deferReply({ ephemeral: true });
+
     const existing = interaction.guild.channels.cache.find(
       c => c.name === `ticket-${interaction.user.id}`
     );
 
     if (existing) {
-      return interaction.reply({
-        content: "❌ عندك تذكرة مفتوحة بالفعل",
-        ephemeral: true
+      return interaction.editReply({
+        content: "❌ عندك تذكرة مفتوحة بالفعل"
       });
     }
 
@@ -152,9 +153,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
       log.send(`📩 تذكرة جديدة: ${channel} بواسطة ${interaction.user}`);
     }
 
-    await interaction.reply({
-      content: "✅ تم فتح التذكرة",
-      ephemeral: true
+    await interaction.editReply({
+      content: "✅ تم فتح التذكرة"
     });
   }
 
