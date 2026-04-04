@@ -10,23 +10,26 @@ const {
 } = require('discord.js');
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
-// ✏️ عدل هنا
+// ✏️ عدل هنا فقط (بدون توكن!)
 const SUPPORT_ROLE_ID = "1475334752436359320";
 const CATEGORY_ID = "1489830376674295991";
 
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
+  console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-// 🎫 التعامل مع الأزرار
 client.on('interactionCreate', async (interaction) => {
 
   if (!interaction.isButton()) return;
 
-  // فتح التذكرة
+  // 🎫 فتح التذكرة
   if (interaction.customId === 'create_ticket') {
 
     const existing = interaction.guild.channels.cache.find(
@@ -72,7 +75,7 @@ client.on('interactionCreate', async (interaction) => {
     await interaction.reply({ content: `✅ تم فتح التذكرة: ${channel}`, ephemeral: true });
   }
 
-  // إغلاق التذكرة
+  // 🔒 إغلاق التذكرة
   if (interaction.customId === 'close_ticket') {
 
     await interaction.reply({ content: "⏳ سيتم إغلاق التذكرة...", ephemeral: true });
@@ -83,7 +86,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// 🔥 إرسال اللوحة (مرة وحدة فقط)
+// 📩 إرسال لوحة التذاكر
 client.on('messageCreate', async (message) => {
 
   if (message.content === '!panel') {
@@ -107,4 +110,5 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+// ❗ التوكن هنا من Railway فقط
 client.login(process.env.TOKEN);
