@@ -105,28 +105,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       channel.setTopic(interaction.user.id);
 
-      // 🔥 إنشاء رسالة لوق
-      if (log) {
-        const sent = await log.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("#2b2d31")
-              .setTitle("📁 TITANIUM")
-              .setDescription(
-                `📩 تم فتح التذكرة\n\n👤 ${interaction.user}\n📁 ${categoryNames[type]}\n🔢 ${number}\n\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
-              )
-          ]
-        });
-
-        logMessages[channel.id] = sent.id;
-      }
-
+      // 🔥 Embed التذكرة (رجعناه زي قبل)
       const embed = new EmbedBuilder()
         .setColor("#2b2d31")
         .setTitle("📂 معلومات التذكرة")
         .addFields(
           { name: "👤 مالك التذكرة:", value: `${interaction.user}` },
-          { name: "📁 القسم:", value: `${categoryNames[type]}` }
+          { name: "🛡️ مشرفي التذاكر:", value: `<@&${STAFF_ROLE}>` },
+          { name: "📅 تاريخ التذكرة:", value: `<t:${Math.floor(Date.now()/1000)}:F>` },
+          { name: "🔢 رقم التذكرة:", value: `${number}` },
+          { name: "📁 قسم التذكرة:", value: `${categoryNames[type]}` },
+          { name: "📌 المستلم:", value: "لا يوجد" },
+          { name: "━━━━━━━━━━━━━━", value: "✍️ الرجاء كتابة مشكلتك أو طلبك بالتفصيل\nوسيتم الرد عليك في أقرب وقت" }
         );
 
       const row = new ActionRowBuilder().addComponents(
@@ -137,42 +127,69 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await channel.send({ embeds: [embed], components: [row] });
 
+      // 📜 لوق (رسالة وحدة)
+      if (log) {
+        const msg = await log.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#2b2d31")
+              .setTitle("📁 TITANIUM")
+              .setDescription(
+                `📩 تم فتح التذكرة\n\n👤 ${interaction.user}\n📁 ${categoryNames[type]}\n🔢 ${number}\n\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
+              )
+          ]
+        });
+
+        logMessages[channel.id] = msg.id;
+      }
+
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 📌 استلام
+    // 📌 استلام (Embed مرتب)
     if (interaction.isButton() && interaction.customId === "claim") {
 
       const ch = interaction.channel;
 
       if (claimedTickets[ch.id]) {
-        return interaction.reply({ content: "❌ مستلمة مسبقًا", ephemeral: true });
+        return interaction.reply({ content: "❌ التذكرة مستلمة", ephemeral: true });
       }
 
       claimedTickets[ch.id] = interaction.user;
 
+      const log = client.channels.cache.get(LOG_CHANNEL);
+
       if (log) {
-        log.send(`📌 تم استلام التذكرة بواسطة ${interaction.user}`);
+        log.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#2b2d31")
+              .setTitle("📁 TITANIUM | استلام")
+              .setDescription(
+                `📌 تم استلام التذكرة\n\n👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
+              )
+          ]
+        });
       }
 
-      await interaction.reply(`📌 تم الاستلام بواسطة ${interaction.user}`);
+      await interaction.reply({ content: `📌 تم استلام التذكرة بواسطة ${interaction.user}` });
     }
 
-    // 🔒🔓
+    // 🔒🔓 (تحديث نفس رسالة اللوق)
     if (interaction.isButton() && interaction.customId === "toggle") {
 
       const ch = interaction.channel;
+      const log = client.channels.cache.get(LOG_CHANNEL);
+      const msgId = logMessages[ch.id];
+
+      if (!log || !msgId) return;
+
+      const logMsg = await log.messages.fetch(msgId);
       const isClosed = ch.name.startsWith("🔒");
-      const logMsgId = logMessages[ch.id];
-
-      if (!logMsgId || !log) return;
-
-      const logMsg = await log.messages.fetch(logMsgId);
 
       if (!isClosed) {
 
         await ch.permissionOverwrites.edit(ch.topic, { SendMessages: false });
-
         const num = ch.name.replace("🎫・تذكرة-", "");
         await ch.setName(`🔒・تذكرة-${num}`);
 
@@ -192,7 +209,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       } else {
 
         await ch.permissionOverwrites.edit(ch.topic, { SendMessages: true });
-
         const num = ch.name.replace("🔒・تذكرة-", "");
         await ch.setName(`🎫・تذكرة-${num}`);
 
