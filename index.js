@@ -10,18 +10,18 @@ const {
 } = require('discord.js');
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
+  intents: [GatewayIntentBits.Guilds]
 });
 
-// 👇 عدل هنا
-const SUPPORT_ROLE_ID = "1475334752436359320"; // ايدي رتبة الدعم
-const CATEGORY_ID = "1489830376674295991"; // ايدي الكاتيجوري
+// ✏️ عدل هنا
+const SUPPORT_ROLE_ID = "1475334752436359320";
+const CATEGORY_ID = "1489830376674295991";
 
 client.once('ready', () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
+  console.log(`Logged in as ${client.user.tag}`);
 });
 
-// 🎫 فتح التذكرة
+// 🎫 التعامل مع الأزرار
 client.on('interactionCreate', async (interaction) => {
 
   if (!interaction.isButton()) return;
@@ -34,11 +34,11 @@ client.on('interactionCreate', async (interaction) => {
     );
 
     if (existing) {
-      return interaction.reply({ content: "❗ عندك تذكرة مفتوحة بالفعل", ephemeral: true });
+      return interaction.reply({ content: "❗ عندك تذكرة مفتوحة", ephemeral: true });
     }
 
     const channel = await interaction.guild.channels.create({
-      name: `ticket-${interaction.user.id}`,
+      name: `ticket-${interaction.user.username}`,
       type: ChannelType.GuildText,
       parent: CATEGORY_ID,
       permissionOverwrites: [
@@ -57,11 +57,6 @@ client.on('interactionCreate', async (interaction) => {
       ],
     });
 
-    const embed = new EmbedBuilder()
-      .setTitle("🎫 تذكرة دعم")
-      .setDescription("يرجى شرح مشكلتك وسيتم الرد عليك من الدعم الفني.")
-      .setColor("Blue");
-
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('close_ticket')
@@ -70,18 +65,17 @@ client.on('interactionCreate', async (interaction) => {
     );
 
     await channel.send({
-      content: `<@${interaction.user.id}> <@&${SUPPORT_ROLE_ID}>`,
-      embeds: [embed],
+      content: `🎫 أهلاً ${interaction.user}\nاكتب مشكلتك هنا`,
       components: [row]
     });
 
-    await interaction.reply({ content: `✅ تم إنشاء التذكرة: ${channel}`, ephemeral: true });
+    await interaction.reply({ content: `✅ تم فتح التذكرة: ${channel}`, ephemeral: true });
   }
 
-  // 🔒 إغلاق التذكرة
+  // إغلاق التذكرة
   if (interaction.customId === 'close_ticket') {
 
-    await interaction.reply({ content: "⏳ جاري إغلاق التذكرة...", ephemeral: true });
+    await interaction.reply({ content: "⏳ سيتم إغلاق التذكرة...", ephemeral: true });
 
     setTimeout(() => {
       interaction.channel.delete();
@@ -89,15 +83,15 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// 📩 أمر إرسال لوحة التذاكر
+// 🔥 إرسال اللوحة (مرة وحدة فقط)
 client.on('messageCreate', async (message) => {
 
-  if (message.content === '!ticket') {
+  if (message.content === '!panel') {
 
     const embed = new EmbedBuilder()
       .setTitle("📩 الدعم الفني")
-      .setDescription("اضغط الزر بالأسفل لفتح تذكرة دعم.")
-      .setColor("Green");
+      .setDescription("اضغط الزر بالأسفل لفتح تذكرة")
+      .setColor("Blue");
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
