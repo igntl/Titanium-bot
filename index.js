@@ -18,7 +18,13 @@ const client = new Client({
   ]
 });
 
-const TOKEN = "حط_التوكن_هنا";
+// ❗ التوكن من Railway فقط
+const TOKEN = process.env.TOKEN;
+
+if (!TOKEN) {
+  console.error("❌ مافيه توكن في Railway (Variables)");
+  process.exit(1);
+}
 
 // 🎭 الرول
 const STAFF_ROLE = "1475334752436359320";
@@ -44,13 +50,12 @@ client.once("ready", () => {
 
 // 📌 بانل
 client.on("messageCreate", async (msg) => {
-  try {
-    if (msg.content === "!panel") {
+  if (msg.content === "!panel") {
 
-      const embed = new EmbedBuilder()
-        .setColor("#2b2d31")
-        .setTitle("📩 نظام التذاكر")
-        .setDescription(`
+    const embed = new EmbedBuilder()
+      .setColor("#2b2d31")
+      .setTitle("📩 نظام التذاكر")
+      .setDescription(`
 📩 الدعم الفني  
 ⛔ الشكاوي  
 ❓ الاستفسارات  
@@ -59,31 +64,28 @@ client.on("messageCreate", async (msg) => {
 
 👇 اختر نوع التذكرة
 `)
-        .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
+      .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId("support").setLabel("الدعم الفني").setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId("complaints").setLabel("الشكاوي").setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId("questions").setLabel("الاستفسارات").setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("admin").setLabel("تقديم الإدارة").setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId("suggest").setLabel("الاقتراحات").setStyle(ButtonStyle.Secondary)
-      );
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId("support").setLabel("الدعم الفني").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("complaints").setLabel("الشكاوي").setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("questions").setLabel("الاستفسارات").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("admin").setLabel("تقديم الإدارة").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("suggest").setLabel("الاقتراحات").setStyle(ButtonStyle.Secondary)
+    );
 
-      msg.channel.send({ embeds: [embed], components: [row] });
-    }
-  } catch (err) {
-    console.error("❌ Panel Error:", err);
+    msg.channel.send({ embeds: [embed], components: [row] });
   }
 });
 
 
-// 🎟️ التفاعلات
+// 🎟️ التفاعل
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
 
     if (!interaction.isButton()) return;
 
-    // 🎟️ إنشاء
+    // 🎟️ إنشاء تذكرة
     if (categories[interaction.customId]) {
 
       const number = ticketCounter++;
@@ -127,14 +129,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const log = client.channels.cache.get(LOG_CHANNEL);
       if (log) {
-        log.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Green")
-              .setTitle("📂 فتح تذكرة")
-              .setDescription(`👤 ${interaction.user}`)
-          ]
-        });
+        log.send(`📂 تم فتح تذكرة بواسطة ${interaction.user}`);
       }
     }
 
@@ -165,7 +160,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const log = client.channels.cache.get(LOG_CHANNEL);
       if (log) {
-        log.send({ content: `🔒 تم إغلاق تذكرة بواسطة ${interaction.user}` });
+        log.send(`🔒 تم إغلاق تذكرة بواسطة ${interaction.user}`);
       }
     }
 
@@ -196,13 +191,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
   } catch (err) {
-    console.error("❌ Interaction Error:", err);
+    console.error("❌ Error:", err);
   }
 });
 
-
-// 🔥 حماية من الكراش
-process.on("uncaughtException", err => console.error("🔥 Crash:", err));
-process.on("unhandledRejection", err => console.error("🔥 Promise:", err));
+// حماية
+process.on("uncaughtException", err => console.error(err));
+process.on("unhandledRejection", err => console.error(err));
 
 client.login(TOKEN);
