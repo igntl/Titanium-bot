@@ -14,20 +14,21 @@ const {
 const fs = require("fs");
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
 const TOKEN = process.env.TOKEN;
 
-// 📂 الكاتقوري
+// 🔥 الايديات (جاهزة)
 const SUPPORT_CATEGORY = "1489844874948907108";
 const COMPLAINT_CATEGORY = "1489830376674295991";
 const QUESTION_CATEGORY = "1489844828404584469";
 
-// 👑 رول الإدارة العليا
 const HIGH_ADMIN_ROLE = "1475334752436359320";
-
-// 📊 لوق
 const LOG_CHANNEL_ID = "1489840541247213781";
 
 // 📁 عداد
@@ -42,6 +43,8 @@ client.once("ready", () => {
 
 // 📩 بانل
 client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
   if (message.content === "!panel") {
 
     const embed = new EmbedBuilder()
@@ -50,7 +53,7 @@ client.on("messageCreate", async (message) => {
       .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
 
     const menu = new StringSelectMenuBuilder()
-      .setCustomId("ticket")
+      .setCustomId("ticket_select")
       .setPlaceholder("اختر نوع التذكرة")
       .addOptions([
         { label: "الدعم الفني", value: "support", emoji: "📩" },
@@ -60,11 +63,11 @@ client.on("messageCreate", async (message) => {
 
     const row = new ActionRowBuilder().addComponents(menu);
 
-    message.channel.send({ embeds: [embed], components: [row] });
+    await message.channel.send({ embeds: [embed], components: [row] });
   }
 });
 
-// 🎯 التفاعل
+// 🎯 فتح تذكرة
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isStringSelectMenu()) return;
 
@@ -88,7 +91,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     key = "question";
   }
 
-  // 🔢 ترقيم
   if (!ticketData[key]) ticketData[key] = 1;
 
   const number = ticketData[key];
@@ -96,7 +98,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   fs.writeFileSync("tickets.json", JSON.stringify(ticketData));
 
-  // 📂 إنشاء روم
   const channel = await interaction.guild.channels.create({
     name: `${number}`,
     type: ChannelType.GuildText,
@@ -117,14 +118,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     ],
   });
 
-  // 🎫 رسالة داخل التذكرة
   const embed = new EmbedBuilder()
     .setTitle("🎫 تذكرة جديدة")
-    .setDescription(`
-👤 ${interaction.user}
-🔢 رقم التذكرة: ${number}
-📂 النوع: ${type}
-    `);
+    .setDescription(`👤 ${interaction.user}\n🔢 رقم: ${number}`);
 
   const closeBtn = new ButtonBuilder()
     .setCustomId("close")
@@ -135,15 +131,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   await channel.send({ embeds: [embed], components: [row] });
 
-  // رد سريع بدون تعليق
   await interaction.reply({
     content: "✅ تم فتح التذكرة",
     ephemeral: true
   });
 
-  // لوق
   const log = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
-  if (log) log.send(`📩 تذكرة: ${channel}`);
+  if (log) log.send(`📩 ${channel}`);
 });
 
 // ❌ إغلاق
