@@ -118,60 +118,43 @@ client.on(Events.InteractionCreate, async (interaction) => {
     .setDescription(`
 🎫 معلومات التذكرة
 
-👤 مالك التذكرة:
-${interaction.user}
+👤 ${interaction.user}
+📅 <t:${Math.floor(Date.now()/1000)}:F>
+🔢 رقم: ${number}
 
-🛡️ مشرفي التذاكر:
-<@&${ADMIN_ROLE}>
-
-📅 تاريخ التذكرة:
-<t:${Math.floor(Date.now()/1000)}:F>
-
-🔢 رقم التذكرة:
-${number}
-
-📂 قسم التذكرة:
-${type === "support" ? "الدعم الفني" :
-type === "complaint" ? "الشكاوي" :
-type === "question" ? "الاستفسارات" :
-type === "admin" ? "تقديم الإدارة" :
-"الاقتراحات"}
-
-✍️ الرجاء كتابة مشكلتك بالتفصيل
-وسيتم الرد عليك قريبًا
+✍️ اكتب طلبك هنا
 `);
 
   const closeBtn = new ButtonBuilder()
     .setCustomId("close")
-    .setLabel("🔒 إغلاق التذكرة")
+    .setLabel("🔒 إغلاق")
     .setStyle(ButtonStyle.Danger);
 
   const row = new ActionRowBuilder().addComponents(closeBtn);
 
-  await channel.send({ embeds: [embed], components: [row] });
+  const msg = await channel.send({
+    embeds: [embed],
+    components: [row]
+  });
 
   await interaction.reply({ content: "✅ تم فتح التذكرة", ephemeral: true });
 });
 
-// 🔒 / 🔓 / 🗑️ + LOG
+// 🔒 / 🔓 بدون سبام
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
   const channel = interaction.channel;
+  const message = interaction.message;
 
   // 🔒 إغلاق
   if (interaction.customId === "close") {
-
-    const user = interaction.user;
-    const createdAt = channel.createdAt;
-    const closedAt = new Date();
 
     await channel.permissionOverwrites.edit(channel.topic, {
       ViewChannel: false,
       SendMessages: false
     });
 
-    // تغيير الاسم 🔒
     await channel.setName(
       `🔒・${channel.name.replace("🎟️・", "").replace("🔒・", "")}`
     );
@@ -188,38 +171,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const row = new ActionRowBuilder().addComponents(openBtn, deleteBtn);
 
-    await channel.send({
+    await message.edit({
       content: "🔒 تم إغلاق التذكرة",
+      embeds: [],
       components: [row]
     });
 
-    // 📁 لوق
-    const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
-
-    if (logChannel) {
-      const logEmbed = new EmbedBuilder()
-        .setColor("#2b2d31")
-        .setTitle("📁 سجل التذكرة")
-        .setDescription(`
-👤 تم فتح التذكرة بواسطة:
-<@${channel.topic}>
-
-🔒 تم إغلاق التذكرة بواسطة:
-${user}
-
-📅 وقت الفتح:
-<t:${Math.floor(createdAt.getTime() / 1000)}:F>
-
-📅 وقت الإغلاق:
-<t:${Math.floor(closedAt.getTime() / 1000)}:F>
-
-Titanium System
-`);
-
-      logChannel.send({ embeds: [logEmbed] });
-    }
-
-    await interaction.reply({ content: "✅ تم الإغلاق", ephemeral: true });
+    await interaction.deferUpdate();
   }
 
   // 🔓 فتح
@@ -230,29 +188,28 @@ Titanium System
       SendMessages: true
     });
 
-    // يرجع 🎟️
     await channel.setName(
       `🎟️・${channel.name.replace("🔒・", "")}`
     );
 
     const closeBtn = new ButtonBuilder()
       .setCustomId("close")
-      .setLabel("🔒 إغلاق التذكرة")
+      .setLabel("🔒 إغلاق")
       .setStyle(ButtonStyle.Danger);
 
     const row = new ActionRowBuilder().addComponents(closeBtn);
 
-    await channel.send({
-      content: "🔓 تم إعادة فتح التذكرة",
+    await message.edit({
+      content: "🎫 تم فتح التذكرة",
       components: [row]
     });
 
-    await interaction.reply({ content: "✅ تم الفتح", ephemeral: true });
+    await interaction.deferUpdate();
   }
 
   // 🗑️ حذف
   if (interaction.customId === "delete") {
-    await interaction.reply("🗑️ جاري حذف التذكرة...");
+    await interaction.reply("🗑️ جاري الحذف...");
     setTimeout(() => channel.delete(), 2000);
   }
 });
