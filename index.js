@@ -42,6 +42,9 @@ const categoryNames = {
   suggest: "💡 الاقتراحات"
 };
 
+// 📜 اللوق
+const LOG_CHANNEL = "1489840541247213781";
+
 let ticketCounter = 1;
 
 client.once("ready", () => {
@@ -57,14 +60,14 @@ client.on("messageCreate", async (msg) => {
       .setColor("#2b2d31")
       .setTitle("📩 نظام التذاكر")
       .setDescription(
-        "📩 نظام التذاكر\n\n" +
         "📩 الدعم الفني\n" +
         "🚫 الشكاوي\n" +
         "❓ الاستفسارات\n" +
         "📝 تقديم الإدارة\n" +
         "💡 الاقتراحات\n\n" +
         "👇 اختر نوع التذكرة"
-      );
+      )
+      .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId("ticket_select")
@@ -92,7 +95,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isStringSelectMenu()) {
 
       const type = interaction.values[0];
-
       const number = ticketCounter++;
 
       const channel = await interaction.guild.channels.create({
@@ -120,15 +122,21 @@ client.on(Events.InteractionCreate, async (interaction) => {
           { name: "━━━━━━━━━━━━━━", value: "✍️ الرجاء كتابة مشكلتك أو طلبك بالتفصيل\nوسيتم الرد عليك في أقرب وقت" }
         );
 
-      const closeBtn = new ButtonBuilder()
+      const btn = new ButtonBuilder()
         .setCustomId("toggle")
         .setLabel("🔒 إغلاق التذكرة")
         .setStyle(ButtonStyle.Danger);
 
       await channel.send({
         embeds: [embed],
-        components: [new ActionRowBuilder().addComponents(closeBtn)]
+        components: [new ActionRowBuilder().addComponents(btn)]
       });
+
+      // 📜 لوق فتح
+      const log = client.channels.cache.get(LOG_CHANNEL);
+      if (log) {
+        log.send(`📩 تم فتح تذكرة بواسطة ${interaction.user}`);
+      }
 
       await interaction.reply({
         content: `تم إنشاء التذكرة: ${channel}`,
@@ -136,19 +144,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
     }
 
-    // 🔒🔓 زر واحد (Toggle)
+    // 🔒🔓 زر واحد
     if (interaction.isButton() && interaction.customId === "toggle") {
 
       const ch = interaction.channel;
       const userId = ch.topic;
+      const log = client.channels.cache.get(LOG_CHANNEL);
 
       const isClosed = ch.name.startsWith("🔒");
 
       if (!isClosed) {
 
-        await ch.permissionOverwrites.edit(userId, {
-          SendMessages: false
-        });
+        await ch.permissionOverwrites.edit(userId, { SendMessages: false });
 
         const num = ch.name.replace("🎫・تذكرة-", "");
         await ch.setName(`🔒・تذكرة-${num}`);
@@ -158,6 +165,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setLabel("🔓 فتح التذكرة")
           .setStyle(ButtonStyle.Success);
 
+        if (log) log.send(`🔒 تم إغلاق التذكرة بواسطة ${interaction.user}`);
+
         await interaction.update({
           content: "🔒 تم إغلاق التذكرة",
           components: [new ActionRowBuilder().addComponents(btn)]
@@ -165,9 +174,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       } else {
 
-        await ch.permissionOverwrites.edit(userId, {
-          SendMessages: true
-        });
+        await ch.permissionOverwrites.edit(userId, { SendMessages: true });
 
         const num = ch.name.replace("🔒・تذكرة-", "");
         await ch.setName(`🎫・تذكرة-${num}`);
@@ -176,6 +183,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setCustomId("toggle")
           .setLabel("🔒 إغلاق التذكرة")
           .setStyle(ButtonStyle.Danger);
+
+        if (log) log.send(`🔓 تم فتح التذكرة بواسطة ${interaction.user}`);
 
         await interaction.update({
           content: "🎫 تم فتح التذكرة",
