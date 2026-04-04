@@ -8,6 +8,9 @@ const {
   AudioPlayerStatus
 } = require('@discordjs/voice');
 
+const ffmpeg = require('ffmpeg-static');
+const { spawn } = require('child_process');
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -15,7 +18,6 @@ const client = new Client({
   ]
 });
 
-// حط ID الروم الصوتي هنا فقط
 const TARGET_CHANNEL_ID = "1475334190034587661";
 
 let isPlaying = false;
@@ -42,11 +44,16 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
       const player = createAudioPlayer();
 
-      const resource = createAudioResource('./welcome.mp3', {
-        inlineVolume: true
-      });
+      // 🔥 تشغيل الصوت باستخدام ffmpeg (الحل النهائي)
+      const stream = spawn(ffmpeg, [
+        '-i', 'welcome.mp3',
+        '-f', 's16le',
+        '-ar', '48000',
+        '-ac', '2',
+        'pipe:1'
+      ], { stdio: ['ignore', 'pipe', 'ignore'] });
 
-      resource.volume.setVolume(1);
+      const resource = createAudioResource(stream.stdout);
 
       player.play(resource);
       connection.subscribe(player);
