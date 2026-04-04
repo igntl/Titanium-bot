@@ -15,7 +15,6 @@ const client = new Client({
   ]
 });
 
-‎// 🔒 حط ID الروم هنا
 const TARGET_CHANNEL_ID = "1475334190034587661";
 
 ‎// ⏱️ منع التكرار
