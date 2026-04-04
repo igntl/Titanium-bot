@@ -8,8 +8,8 @@ const {
   AudioPlayerStatus
 } = require('@discordjs/voice');
 
-const ffmpeg = require('ffmpeg-static');
-const { spawn } = require('child_process');
+const googleTTS = require('google-tts-api');
+const https = require('https');
 
 const client = new Client({
   intents: [
@@ -23,7 +23,7 @@ const TARGET_CHANNEL_ID = "1475334190034587661";
 let isPlaying = false;
 
 client.on('ready', () => {
-  console.log(`Bot is ready: ${client.user.tag}`);
+  console.log(`Bot ready: ${client.user.tag}`);
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
@@ -44,16 +44,15 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
       const player = createAudioPlayer();
 
-      // 🔥 تشغيل الصوت باستخدام ffmpeg (الحل النهائي)
-      const stream = spawn(ffmpeg, [
-        '-i', 'welcome.mp3',
-        '-f', 's16le',
-        '-ar', '48000',
-        '-ac', '2',
-        'pipe:1'
-      ], { stdio: ['ignore', 'pipe', 'ignore'] });
+      // 👇 النص اللي تبيه
+      const url = googleTTS.getAudioUrl(
+        "اهلا بك في سيرفر تتانيوم يرجى انتظار الدعم الفني",
+        { lang: 'ar', slow: false }
+      );
 
-      const resource = createAudioResource(stream.stdout);
+      const stream = https.get(url);
+
+      const resource = createAudioResource(stream);
 
       player.play(resource);
       connection.subscribe(player);
@@ -63,14 +62,8 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         isPlaying = false;
       });
 
-      player.on('error', error => {
-        console.log('Audio error:', error);
-        connection.destroy();
-        isPlaying = false;
-      });
-
     } catch (error) {
-      console.log('Error:', error);
+      console.log(error);
       isPlaying = false;
     }
   }
