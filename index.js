@@ -42,6 +42,7 @@ const categoryNames = {
 
 let ticketCounter = 1;
 let claimedTickets = {};
+let logMessages = {}; // 🔥 نخزن رسالة اللوق
 
 client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
@@ -56,12 +57,7 @@ client.on("messageCreate", async (msg) => {
       .setColor("#2b2d31")
       .setTitle("📩 نظام التذاكر")
       .setDescription(
-        "📩 الدعم الفني\n" +
-        "🚫 الشكاوي\n" +
-        "❓ الاستفسارات\n" +
-        "📝 تقديم الإدارة\n" +
-        "💡 الاقتراحات\n\n" +
-        "👇 اختر نوع التذكرة"
+        "📩 الدعم الفني\n🚫 الشكاوي\n❓ الاستفسارات\n📝 تقديم الإدارة\n💡 الاقتراحات\n\n👇 اختر نوع التذكرة"
       )
       .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
 
@@ -109,17 +105,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       channel.setTopic(interaction.user.id);
 
+      // 🔥 إنشاء رسالة اللوق (مرة وحدة)
+      if (log) {
+        const msg = await log.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#2b2d31")
+              .setTitle("📁 TITANIUM")
+              .setDescription(
+                `📩 تم فتح التذكرة\n\n` +
+                `👤 ${interaction.user}\n` +
+                `📁 ${categoryNames[type]}\n` +
+                `🔢 ${number}\n\n` +
+                `📅 وقت الفتح:\n<t:${Math.floor(Date.now()/1000)}:F>`
+              )
+          ]
+        });
+
+        logMessages[channel.id] = msg.id;
+      }
+
       const embed = new EmbedBuilder()
         .setColor("#2b2d31")
         .setTitle("📂 معلومات التذكرة")
         .addFields(
           { name: "👤 مالك التذكرة:", value: `${interaction.user}` },
-          { name: "🛡️ مشرفي التذاكر:", value: `<@&${STAFF_ROLE}>` },
-          { name: "📅 تاريخ التذكرة:", value: `<t:${Math.floor(Date.now()/1000)}:F>` },
-          { name: "🔢 رقم التذكرة:", value: `${number}` },
-          { name: "📁 قسم التذكرة:", value: `${categoryNames[type]}` },
-          { name: "📌 المستلم:", value: "لا يوجد" },
-          { name: "━━━━━━━━━━━━━━", value: "✍️ الرجاء كتابة مشكلتك أو طلبك بالتفصيل\nوسيتم الرد عليك في أقرب وقت" }
+          { name: "📁 القسم:", value: `${categoryNames[type]}` }
         );
 
       const row = new ActionRowBuilder().addComponents(
@@ -130,101 +141,87 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await channel.send({ embeds: [embed], components: [row] });
 
-      // 📜 لوق فتح
-      if (log) {
-        log.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("#2b2d31")
-              .setTitle("📁 TITANIUM | فتح تذكرة")
-              .setDescription(
-                `👤 ${interaction.user}\n` +
-                `📁 ${categoryNames[type]}\n` +
-                `🔢 ${number}\n` +
-                `📅 <t:${Math.floor(Date.now()/1000)}:F>`
-              )
-          ]
-        });
-      }
-
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 📌 استلام
-    if (interaction.isButton() && interaction.customId === "claim") {
+    // 📌 استلام (رسالة منفصلة)
+    if (interaction.customId === "claim") {
 
       const ch = interaction.channel;
 
       if (claimedTickets[ch.id]) {
-        return interaction.reply({
-          content: `❌ مستلمة من ${claimedTickets[ch.id]}`,
-          ephemeral: true
-        });
+        return interaction.reply({ content: "❌ مستلمة", ephemeral: true });
       }
 
       claimedTickets[ch.id] = interaction.user;
 
       if (log) {
-        log.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("#2b2d31")
-              .setTitle("📁 TITANIUM | استلام")
-              .setDescription(
-                `👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
-              )
-          ]
-        });
+        log.send(`📌 تم استلام التذكرة بواسطة ${interaction.user}`);
       }
 
-      await interaction.reply({ content: `📌 تم الاستلام بواسطة ${interaction.user}` });
+      await interaction.reply(`📌 تم الاستلام بواسطة ${interaction.user}`);
     }
 
-    // 🔒🔓
-    if (interaction.isButton() && interaction.customId === "toggle") {
+    // 🔒🔓 تحديث نفس الرسالة
+    if (interaction.customId === "toggle") {
 
       const ch = interaction.channel;
-      const userId = ch.topic;
+      const msgId = logMessages[ch.id];
+
+      if (!msgId) return;
+
+      const logMsg = await log.messages.fetch(msgId);
+
       const isClosed = ch.name.startsWith("🔒");
 
       if (!isClosed) {
 
-        await ch.permissionOverwrites.edit(userId, { SendMessages: false });
+        await ch.permissionOverwrites.edit(ch.topic, { SendMessages: false });
 
         const num = ch.name.replace("🎫・تذكرة-", "");
         await ch.setName(`🔒・تذكرة-${num}`);
 
-        if (log) {
-          log.send({ embeds: [new EmbedBuilder()
-            .setColor("#2b2d31")
-            .setTitle("📁 TITANIUM | إغلاق")
-            .setDescription(`👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`)
-          ]});
-        }
+        await logMsg.edit({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#2b2d31")
+              .setTitle("📁 TITANIUM")
+              .setDescription(
+                `🔒 تم إغلاق التذكرة\n\n` +
+                `👤 ${interaction.user}\n` +
+                `📅 وقت الإغلاق:\n<t:${Math.floor(Date.now()/1000)}:F>`
+              )
+          ]
+        });
 
         await interaction.update({ content: "🔒 تم الإغلاق", components: interaction.message.components });
 
       } else {
 
-        await ch.permissionOverwrites.edit(userId, { SendMessages: true });
+        await ch.permissionOverwrites.edit(ch.topic, { SendMessages: true });
 
         const num = ch.name.replace("🔒・تذكرة-", "");
         await ch.setName(`🎫・تذكرة-${num}`);
 
-        if (log) {
-          log.send({ embeds: [new EmbedBuilder()
-            .setColor("#2b2d31")
-            .setTitle("📁 TITANIUM | فتح")
-            .setDescription(`👤 ${interaction.user}\n📁 ${ch.name}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`)
-          ]});
-        }
+        await logMsg.edit({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#2b2d31")
+              .setTitle("📁 TITANIUM")
+              .setDescription(
+                `🔓 تم فتح التذكرة\n\n` +
+                `👤 ${interaction.user}\n` +
+                `📅 وقت الفتح:\n<t:${Math.floor(Date.now()/1000)}:F>`
+              )
+          ]
+        });
 
         await interaction.update({ content: "🔓 تم الفتح", components: interaction.message.components });
       }
     }
 
     // 🗑️ حذف
-    if (interaction.isButton() && interaction.customId === "delete") {
+    if (interaction.customId === "delete") {
       await interaction.reply({ content: "🗑️ جاري الحذف...", ephemeral: true });
       setTimeout(() => interaction.channel.delete(), 2000);
     }
@@ -232,18 +229,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   } catch (err) {
     console.error(err);
   }
-});
-
-
-// 🚨 لوق الأخطاء
-process.on("uncaughtException", async (err) => {
-  const log = client.channels.cache.get(LOG_CHANNEL);
-  if (log) log.send(`❌ ${err.message}`);
-});
-
-process.on("unhandledRejection", async (err) => {
-  const log = client.channels.cache.get(LOG_CHANNEL);
-  if (log) log.send(`❌ ${err}`);
 });
 
 client.login(TOKEN);
