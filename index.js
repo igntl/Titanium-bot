@@ -1,81 +1,115 @@
-const { Client, GatewayIntentBits } = require('discord.js');
 const { 
-  joinVoiceChannel, 
-  createAudioPlayer, 
-  createAudioResource,
-  entersState,
-  VoiceConnectionStatus,
-  AudioPlayerStatus,
-  StreamType
-} = require('@discordjs/voice');
-
-const googleTTS = require('google-tts-api');
-const https = require('https');
+  Client, 
+  GatewayIntentBits, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ChannelType, 
+  PermissionsBitField, 
+  EmbedBuilder 
+} = require('discord.js');
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildVoiceStates
-  ]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
 });
 
-const TARGET_CHANNEL_ID = "1489822966605811752";
+// 👇 عدل هنا
+const SUPPORT_ROLE_ID = "1475334752436359320"; // ايدي رتبة الدعم
+const CATEGORY_ID = "1489813663773753527"; // ايدي الكاتيجوري
 
-let isPlaying = false;
-
-client.on('ready', () => {
-  console.log(`Bot ready: ${client.user.tag}`);
+client.once('ready', () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-client.on('voiceStateUpdate', async (oldState, newState) => {
+// 🎫 فتح التذكرة
+client.on('interactionCreate', async (interaction) => {
 
-  if (!oldState.channel && newState.channelId === TARGET_CHANNEL_ID) {
+  if (!interaction.isButton()) return;
 
-    if (isPlaying) return;
-    isPlaying = true;
+  // فتح التذكرة
+  if (interaction.customId === 'create_ticket') {
 
-    try {
-      const connection = joinVoiceChannel({
-        channelId: newState.channel.id,
-        guildId: newState.guild.id,
-        adapterCreator: newState.guild.voiceAdapterCreator,
-      });
+    const existing = interaction.guild.channels.cache.find(
+      c => c.name === `ticket-${interaction.user.id}`
+    );
 
-      await entersState(connection, VoiceConnectionStatus.Ready, 5000);
-
-      const player = createAudioPlayer();
-
-      // 🔥 نصك هنا
-      const url = googleTTS.getAudioUrl(
-        "اهلا بك في سيرفر تتانيوم يرجى انتظار الدعم الفني",
-        { lang: 'ar', slow: false }
-      );
-
-      https.get(url, (res) => {
-
-        const resource = createAudioResource(res, {
-          inputType: StreamType.Arbitrary
-        });
-
-        player.play(resource);
-        connection.subscribe(player);
-      });
-
-      player.on(AudioPlayerStatus.Idle, () => {
-        connection.destroy();
-        isPlaying = false;
-      });
-
-      player.on('error', error => {
-        console.log(error);
-        connection.destroy();
-        isPlaying = false;
-      });
-
-    } catch (error) {
-      console.log(error);
-      isPlaying = false;
+    if (existing) {
+      return interaction.reply({ content: "❗ عندك تذكرة مفتوحة بالفعل", ephemeral: true });
     }
+
+    const channel = await interaction.guild.channels.create({
+      name: `ticket-${interaction.user.id}`,
+      type: ChannelType.GuildText,
+      parent: CATEGORY_ID,
+      permissionOverwrites: [
+        {
+          id: interaction.guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: interaction.user.id,
+          allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
+        },
+        {
+          id: SUPPORT_ROLE_ID,
+          allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
+        },
+      ],
+    });
+
+    const embed = new EmbedBuilder()
+      .setTitle("🎫 تذكرة دعم")
+      .setDescription("يرجى شرح مشكلتك وسيتم الرد عليك من الدعم الفني.")
+      .setColor("Blue");
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('close_ticket')
+        .setLabel('🔒 إغلاق التذكرة')
+        .setStyle(ButtonStyle.Danger)
+    );
+
+    await channel.send({
+      content: `<@${interaction.user.id}> <@&${SUPPORT_ROLE_ID}>`,
+      embeds: [embed],
+      components: [row]
+    });
+
+    await interaction.reply({ content: `✅ تم إنشاء التذكرة: ${channel}`, ephemeral: true });
+  }
+
+  // 🔒 إغلاق التذكرة
+  if (interaction.customId === 'close_ticket') {
+
+    await interaction.reply({ content: "⏳ جاري إغلاق التذكرة...", ephemeral: true });
+
+    setTimeout(() => {
+      interaction.channel.delete();
+    }, 3000);
+  }
+});
+
+// 📩 أمر إرسال لوحة التذاكر
+client.on('messageCreate', async (message) => {
+
+  if (message.content === '!ticket') {
+
+    const embed = new EmbedBuilder()
+      .setTitle("📩 الدعم الفني")
+      .setDescription("اضغط الزر بالأسفل لفتح تذكرة دعم.")
+      .setColor("Green");
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('create_ticket')
+        .setLabel('🎫 فتح تذكرة')
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    message.channel.send({
+      embeds: [embed],
+      components: [row]
+    });
   }
 });
 
