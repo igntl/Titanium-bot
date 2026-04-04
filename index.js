@@ -1,13 +1,4 @@
-const { 
-  Client, 
-  GatewayIntentBits, 
-  ActionRowBuilder, 
-  ButtonBuilder, 
-  ButtonStyle, 
-  ChannelType, 
-  PermissionsBitField, 
-  EmbedBuilder 
-} = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField, ChannelType } = require('discord.js');
 
 const client = new Client({
   intents: [
@@ -17,98 +8,49 @@ const client = new Client({
   ]
 });
 
-// ✏️ عدل هنا فقط (بدون توكن!)
-const SUPPORT_ROLE_ID = "1475334752436359320";
-const CATEGORY_ID = "1489830376674295991";
+const TOKEN = process.env.TOKEN;
 
-client.once('ready', () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
+const CATEGORY_ID = "1489830376674295991";
+const SUPPORT_ROLE_ID = "1475334752436359320";
+
+client.on("ready", () => {
+  console.log(`Logged in as ${client.user.tag}`);
 });
 
-client.on('interactionCreate', async (interaction) => {
+client.on("messageCreate", async (message) => {
+  if (message.content === "!ticket") {
+    message.channel.send("اضغط 📩 لفتح تذكرة");
+  }
 
-  if (!interaction.isButton()) return;
-
-  // 🎫 فتح التذكرة
-  if (interaction.customId === 'create_ticket') {
-
-    const existing = interaction.guild.channels.cache.find(
-      c => c.name === `ticket-${interaction.user.id}`
-    );
-
-    if (existing) {
-      return interaction.reply({ content: "❗ عندك تذكرة مفتوحة", ephemeral: true });
-    }
-
-    const channel = await interaction.guild.channels.create({
-      name: `ticket-${interaction.user.username}`,
+  if (message.content === "!open") {
+    const channel = await message.guild.channels.create({
+      name: `ticket-${message.author.username}`,
       type: ChannelType.GuildText,
       parent: CATEGORY_ID,
       permissionOverwrites: [
         {
-          id: interaction.guild.id,
+          id: message.guild.id,
           deny: [PermissionsBitField.Flags.ViewChannel],
         },
         {
-          id: interaction.user.id,
-          allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
+          id: message.author.id,
+          allow: [PermissionsBitField.Flags.ViewChannel],
         },
         {
           id: SUPPORT_ROLE_ID,
-          allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
-        },
+          allow: [PermissionsBitField.Flags.ViewChannel],
+        }
       ],
     });
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('close_ticket')
-        .setLabel('🔒 إغلاق التذكرة')
-        .setStyle(ButtonStyle.Danger)
-    );
-
-    await channel.send({
-      content: `🎫 أهلاً ${interaction.user}\nاكتب مشكلتك هنا`,
-      components: [row]
-    });
-
-    await interaction.reply({ content: `✅ تم فتح التذكرة: ${channel}`, ephemeral: true });
+    channel.send(`أهلاً ${message.author}، اكتب مشكلتك هنا`);
   }
 
-  // 🔒 إغلاق التذكرة
-  if (interaction.customId === 'close_ticket') {
-
-    await interaction.reply({ content: "⏳ سيتم إغلاق التذكرة...", ephemeral: true });
-
-    setTimeout(() => {
-      interaction.channel.delete();
-    }, 3000);
+  if (message.content === "!close") {
+    if (message.channel.name.startsWith("ticket-")) {
+      message.channel.delete();
+    }
   }
 });
 
-// 📩 إرسال لوحة التذاكر
-client.on('messageCreate', async (message) => {
-
-  if (message.content === '!panel') {
-
-    const embed = new EmbedBuilder()
-      .setTitle("📩 الدعم الفني")
-      .setDescription("اضغط الزر بالأسفل لفتح تذكرة")
-      .setColor("Blue");
-
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('create_ticket')
-        .setLabel('🎫 فتح تذكرة')
-        .setStyle(ButtonStyle.Primary)
-    );
-
-    message.channel.send({
-      embeds: [embed],
-      components: [row]
-    });
-  }
-});
-
-// ❗ التوكن هنا من Railway فقط
-client.login(process.env.TOKEN);
+client.login(TOKEN);
