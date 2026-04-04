@@ -11,6 +11,8 @@ const {
   Events
 } = require('discord.js');
 
+const fs = require("fs");
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -21,58 +23,51 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-// ✅ جاهزة من عندك
-const CATEGORY_ID = "1489830376674295991";
+// 🔥 الايديات جاهزة منك
+const SUPPORT_CATEGORY = "1489844874948907108";
+const COMPLAINT_CATEGORY = "1489830376674295991";
+const QUESTION_CATEGORY = "1489844828404584469";
+
 const SUPPORT_ROLE_ID = "1475334752436359320";
 const LOG_CHANNEL_ID = "1489840541247213781";
+
+// 📁 تخزين الترقيم
+let ticketData = {};
+if (fs.existsSync("tickets.json")) {
+  ticketData = JSON.parse(fs.readFileSync("tickets.json"));
+}
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-// 📩 إرسال البانل
+// 📩 البانل
 client.on("messageCreate", async (message) => {
   if (message.content === "!panel") {
 
     const embed = new EmbedBuilder()
       .setTitle("📩 نظام التذاكر")
       .setDescription(`
-🎧 الدعم الفني: مشاكل السيرفر  
-⚠️ الشكاوي: مشكلة مع عضو  
-❓ الاستفسارات: سؤال عام  
+🎧 الدعم الفني  
+⚠️ الشكاوي  
+❓ الاستفسارات  
 
-اختر نوع التذكرة من القائمة 👇
+اختر نوع التذكرة 👇
       `)
-      .setColor("#2b2d31")
-      .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489842642006179901/7FCB9C09-6BA0-4A5B-B6A0-961659BB6B5E.png?ex=69d1e395&is=69d09215&hm=28b044bd0a1e50ea925f323ae5d7c52fe9e02535c0962bc0778dbe6b0c8dc100&");
+      .setImage("https://i.imgur.com/8Km9tLL.png");
 
     const menu = new StringSelectMenuBuilder()
-      .setCustomId("select_ticket")
-      .setPlaceholder("اختر فئة التذكرة")
+      .setCustomId("ticket_select")
+      .setPlaceholder("اختر الفئة")
       .addOptions([
-        {
-          label: "الدعم الفني",
-          value: "support",
-          emoji: "🎧"
-        },
-        {
-          label: "شكوى",
-          value: "complaint",
-          emoji: "⚠️"
-        },
-        {
-          label: "استفسار",
-          value: "question",
-          emoji: "❓"
-        }
+        { label: "الدعم الفني", value: "support", emoji: "🎧" },
+        { label: "شكوى", value: "complaint", emoji: "⚠️" },
+        { label: "استفسار", value: "question", emoji: "❓" }
       ]);
 
     const row = new ActionRowBuilder().addComponents(menu);
 
-    message.channel.send({
-      embeds: [embed],
-      components: [row]
-    });
+    message.channel.send({ embeds: [embed], components: [row] });
   }
 });
 
@@ -80,45 +75,44 @@ client.on("messageCreate", async (message) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isStringSelectMenu() && !interaction.isButton()) return;
 
-  // 📥 فتح تذكرة
-  if (interaction.isStringSelectMenu() && interaction.customId === "select_ticket") {
+  // فتح تذكرة
+  if (interaction.isStringSelectMenu()) {
 
     await interaction.deferReply({ ephemeral: true });
 
-    const existing = interaction.guild.channels.cache.find(
-      c => c.name === `ticket-${interaction.user.id}`
-    );
-
-    if (existing) {
-      return interaction.editReply({
-        content: "❌ عندك تذكرة مفتوحة بالفعل"
-      });
-    }
-
     const type = interaction.values[0];
 
-    let name = "ticket";
-    let label = "";
+    let category;
+    let key;
 
     if (type === "support") {
-      name = "support";
-      label = "🎧 دعم فني";
+      category = SUPPORT_CATEGORY;
+      key = "support";
     }
 
     if (type === "complaint") {
-      name = "complaint";
-      label = "⚠️ شكوى";
+      category = COMPLAINT_CATEGORY;
+      key = "complaint";
     }
 
     if (type === "question") {
-      name = "question";
-      label = "❓ استفسار";
+      category = QUESTION_CATEGORY;
+      key = "question";
     }
 
+    // 🔢 الترقيم لكل قسم لحاله
+    if (!ticketData[key]) ticketData[key] = 1;
+
+    const count = ticketData[key];
+    ticketData[key]++;
+
+    fs.writeFileSync("tickets.json", JSON.stringify(ticketData, null, 2));
+
+    // 📂 إنشاء التذكرة باسم رقم فقط
     const channel = await interaction.guild.channels.create({
-      name: `${name}-${interaction.user.id}`,
+      name: `${count}`,
       type: ChannelType.GuildText,
-      parent: CATEGORY_ID,
+      parent: category,
       permissionOverwrites: [
         {
           id: interaction.guild.id,
@@ -135,6 +129,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       ],
     });
 
+    // زر إغلاق
     const closeBtn = new ButtonBuilder()
       .setCustomId("close_ticket")
       .setLabel("🔒 إغلاق التذكرة")
@@ -143,14 +138,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const row = new ActionRowBuilder().addComponents(closeBtn);
 
     await channel.send({
-      content: `أهلاً ${interaction.user}\nنوع التذكرة: ${label}`,
+      content: `أهلاً ${interaction.user} 👋\nاكتب مشكلتك هنا`,
       components: [row]
     });
 
-    // 📝 لوق
+    // لوق
     const log = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (log) {
-      log.send(`📩 تذكرة جديدة: ${channel} بواسطة ${interaction.user}`);
+      log.send(`📩 تم فتح تذكرة: ${channel}`);
     }
 
     await interaction.editReply({
@@ -158,15 +153,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
     });
   }
 
-  // 🔒 إغلاق
+  // إغلاق
   if (interaction.isButton() && interaction.customId === "close_ticket") {
+
+    await interaction.reply({
+      content: "🔒 جاري الإغلاق...",
+      ephemeral: true
+    });
 
     const log = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (log) {
-      log.send(`🔒 تم إغلاق التذكرة: ${interaction.channel.name}`);
+      log.send(`❌ تم إغلاق: ${interaction.channel.name}`);
     }
-
-    await interaction.reply({ content: "جاري الإغلاق...", ephemeral: true });
 
     setTimeout(() => {
       interaction.channel.delete();
