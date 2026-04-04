@@ -17,7 +17,6 @@ const client = new Client({
 
 const TARGET_CHANNEL_ID = "1475334190034587661";
 
-‎// ⏱️ منع التكرار
 let lastPlayTime = 0;
 const COOLDOWN = 15;
 
@@ -49,7 +48,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
       player.play(resource);
       connection.subscribe(player);
 
-‎      // 👇 يطلع بعد ما يخلص
       player.on(AudioPlayerStatus.Idle, () => {
         connection.destroy();
       });
