@@ -5,7 +5,8 @@ const {
   createAudioResource,
   entersState,
   VoiceConnectionStatus,
-  AudioPlayerStatus
+  AudioPlayerStatus,
+  StreamType
 } = require('@discordjs/voice');
 
 const googleTTS = require('google-tts-api');
@@ -18,7 +19,7 @@ const client = new Client({
   ]
 });
 
-const TARGET_CHANNEL_ID = "1475334190034587661";
+const TARGET_CHANNEL_ID = "1489822966605811752";
 
 let isPlaying = false;
 
@@ -44,20 +45,29 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
       const player = createAudioPlayer();
 
-      // 👇 النص اللي تبيه
+      // 🔥 نصك هنا
       const url = googleTTS.getAudioUrl(
         "اهلا بك في سيرفر تتانيوم يرجى انتظار الدعم الفني",
         { lang: 'ar', slow: false }
       );
 
-      const stream = https.get(url);
+      https.get(url, (res) => {
 
-      const resource = createAudioResource(stream);
+        const resource = createAudioResource(res, {
+          inputType: StreamType.Arbitrary
+        });
 
-      player.play(resource);
-      connection.subscribe(player);
+        player.play(resource);
+        connection.subscribe(player);
+      });
 
       player.on(AudioPlayerStatus.Idle, () => {
+        connection.destroy();
+        isPlaying = false;
+      });
+
+      player.on('error', error => {
+        console.log(error);
         connection.destroy();
         isPlaying = false;
       });
