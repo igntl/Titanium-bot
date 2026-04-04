@@ -42,7 +42,7 @@ const categoryNames = {
 
 let ticketCounter = 1;
 let claimedTickets = {};
-let logMessages = {}; // 🔥 نخزن رسالة اللوق
+let logMessages = {};
 
 client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
@@ -105,24 +105,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       channel.setTopic(interaction.user.id);
 
-      // 🔥 إنشاء رسالة اللوق (مرة وحدة)
+      // 🔥 إنشاء رسالة لوق
       if (log) {
-        const msg = await log.send({
+        const sent = await log.send({
           embeds: [
             new EmbedBuilder()
               .setColor("#2b2d31")
               .setTitle("📁 TITANIUM")
               .setDescription(
-                `📩 تم فتح التذكرة\n\n` +
-                `👤 ${interaction.user}\n` +
-                `📁 ${categoryNames[type]}\n` +
-                `🔢 ${number}\n\n` +
-                `📅 وقت الفتح:\n<t:${Math.floor(Date.now()/1000)}:F>`
+                `📩 تم فتح التذكرة\n\n👤 ${interaction.user}\n📁 ${categoryNames[type]}\n🔢 ${number}\n\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
               )
           ]
         });
 
-        logMessages[channel.id] = msg.id;
+        logMessages[channel.id] = sent.id;
       }
 
       const embed = new EmbedBuilder()
@@ -144,13 +140,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 📌 استلام (رسالة منفصلة)
-    if (interaction.customId === "claim") {
+    // 📌 استلام
+    if (interaction.isButton() && interaction.customId === "claim") {
 
       const ch = interaction.channel;
 
       if (claimedTickets[ch.id]) {
-        return interaction.reply({ content: "❌ مستلمة", ephemeral: true });
+        return interaction.reply({ content: "❌ مستلمة مسبقًا", ephemeral: true });
       }
 
       claimedTickets[ch.id] = interaction.user;
@@ -162,17 +158,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply(`📌 تم الاستلام بواسطة ${interaction.user}`);
     }
 
-    // 🔒🔓 تحديث نفس الرسالة
-    if (interaction.customId === "toggle") {
+    // 🔒🔓
+    if (interaction.isButton() && interaction.customId === "toggle") {
 
       const ch = interaction.channel;
-      const msgId = logMessages[ch.id];
-
-      if (!msgId) return;
-
-      const logMsg = await log.messages.fetch(msgId);
-
       const isClosed = ch.name.startsWith("🔒");
+      const logMsgId = logMessages[ch.id];
+
+      if (!logMsgId || !log) return;
+
+      const logMsg = await log.messages.fetch(logMsgId);
 
       if (!isClosed) {
 
@@ -187,9 +182,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setColor("#2b2d31")
               .setTitle("📁 TITANIUM")
               .setDescription(
-                `🔒 تم إغلاق التذكرة\n\n` +
-                `👤 ${interaction.user}\n` +
-                `📅 وقت الإغلاق:\n<t:${Math.floor(Date.now()/1000)}:F>`
+                `🔒 تم إغلاق التذكرة\n\n👤 ${interaction.user}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
               )
           ]
         });
@@ -209,9 +202,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setColor("#2b2d31")
               .setTitle("📁 TITANIUM")
               .setDescription(
-                `🔓 تم فتح التذكرة\n\n` +
-                `👤 ${interaction.user}\n` +
-                `📅 وقت الفتح:\n<t:${Math.floor(Date.now()/1000)}:F>`
+                `🔓 تم فتح التذكرة\n\n👤 ${interaction.user}\n📅 <t:${Math.floor(Date.now()/1000)}:F>`
               )
           ]
         });
@@ -221,7 +212,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     // 🗑️ حذف
-    if (interaction.customId === "delete") {
+    if (interaction.isButton() && interaction.customId === "delete") {
       await interaction.reply({ content: "🗑️ جاري الحذف...", ephemeral: true });
       setTimeout(() => interaction.channel.delete(), 2000);
     }
