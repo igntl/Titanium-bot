@@ -23,7 +23,7 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-// 🔥 الايديات (كلها جاهزة)
+// 🔥 الايديات
 const SUPPORT_CATEGORY = "1489844874948907108";
 const COMPLAINT_CATEGORY = "1489830376674295991";
 const QUESTION_CATEGORY = "1489844828404584469";
@@ -33,7 +33,7 @@ const SUGGEST_CATEGORY = "1489854304851464292";
 const ADMIN_ROLE = "1475334752436359320";
 const LOG_CHANNEL_ID = "1489840541247213781";
 
-// 📊 عداد التذاكر
+// 📊 عداد
 let ticketData = {};
 if (fs.existsSync("tickets.json")) {
   ticketData = JSON.parse(fs.readFileSync("tickets.json"));
@@ -52,12 +52,11 @@ client.on("messageCreate", async (message) => {
     const embed = new EmbedBuilder()
       .setTitle("📩 نظام التذاكر")
       .setDescription(`
-      
 📩 **الدعم الفني**
-مساعدة في مشاكل السيرفر (للاعب)
+مساعدة في مشاكل السيرفر
 
 ⛔ **الشكاوي**
-عندك مشكلة مع شخص في السيرفر
+عندك مشكلة مع شخص
 
 ❓ **الاستفسارات**
 أسئلة عن السيرفر
@@ -68,9 +67,10 @@ client.on("messageCreate", async (message) => {
 💼 **الاقتراحات**
 اقتراحاتك لتطوير السيرفر
 
+━━━━━━━━━━━━━━━━━━
 
 ⚠️ اختر القسم الصحيح
-وسيتم الرد عليك في أقرب وقت
+وسيتم الرد عليك قريبًا
       `)
       .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
 
@@ -136,6 +136,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     name: `${number}`,
     type: ChannelType.GuildText,
     parent: category,
+    topic: interaction.user.id,
     permissionOverwrites: [
       {
         id: interaction.guild.id,
@@ -154,10 +155,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   const now = new Date();
 
-const embed = new EmbedBuilder()
-  .setColor("#2b2d31")
-  .setTitle("🎫 | معلومات التذكرة")
-  .setDescription(`
+  const embed = new EmbedBuilder()
+    .setColor("#2b2d31")
+    .setTitle("🎫 | معلومات التذكرة")
+    .setDescription(`
 👤 **مالك التذكرة:**
 ${interaction.user}
 
@@ -179,8 +180,7 @@ type === "admin" ? "تقديم الإدارة" :
 
 ━━━━━━━━━━━━━━━━━━
 
-✍️ الرجاء كتابة مشكلتك أو طلبك بالتفصيل
-وسيتم الرد عليك في أقرب وقت
+✍️ اكتب تفاصيلك هنا
 `);
 
   const closeBtn = new ButtonBuilder()
@@ -196,20 +196,48 @@ type === "admin" ? "تقديم الإدارة" :
     content: "✅ تم فتح التذكرة",
     ephemeral: true
   });
-
-  const log = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
-  if (log) log.send(`📩 تذكرة جديدة: ${channel}`);
 });
 
-// ❌ إغلاق
+// ❌ إغلاق + لوق احترافي
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
   if (interaction.customId === "close") {
+
+    const channel = interaction.channel;
+    const user = interaction.user;
+
+    const createdAt = channel.createdAt;
+    const now = new Date();
+
+    const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
+
+    const embed = new EmbedBuilder()
+      .setColor("#2b2d31")
+      .setTitle("📁 | سجل التذكرة")
+      .setDescription(`
+👤 **تم فتح التذكرة بواسطة:**
+<@${channel.topic}>
+
+🔒 **تم إغلاق التذكرة بواسطة:**
+${user}
+
+📅 **وقت الفتح:**
+<t:${Math.floor(createdAt.getTime() / 1000)}:F>
+
+📅 **وقت الإغلاق:**
+<t:${Math.floor(now.getTime() / 1000)}:F>
+      `)
+      .setFooter({ text: "Titanium System" });
+
+    if (logChannel) {
+      logChannel.send({ embeds: [embed] });
+    }
+
     await interaction.reply({ content: "🔒 جاري الإغلاق..." });
 
     setTimeout(() => {
-      interaction.channel.delete();
+      channel.delete();
     }, 2000);
   }
 });
