@@ -1,7 +1,7 @@
 const {
   Client,
   GatewayIntentBits,
- EmbedBuilder,
+  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -48,7 +48,7 @@ client.once("ready", () => {
 });
 
 
-// 📌 بانل (نفس شكلك القديم)
+// 📌 بانل (تم إصلاح الشكل)
 client.on("messageCreate", async (msg) => {
   if (msg.content === "!panel") {
 
@@ -114,7 +114,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         );
 
       const closeBtn = new ButtonBuilder()
-        .setCustomId(`close_${channel.id}`)
+        .setCustomId("close")
         .setLabel("🔒 إغلاق التذكرة")
         .setStyle(ButtonStyle.Danger);
 
@@ -126,8 +126,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 🔒 إغلاق
-    if (interaction.customId.startsWith("close_")) {
+    // 🔒 إغلاق (مصلح)
+    if (interaction.customId === "close") {
 
       const ch = interaction.channel;
       const userId = ch.topic;
@@ -137,30 +137,28 @@ client.on(Events.InteractionCreate, async (interaction) => {
         SendMessages: false
       });
 
-      const num = ch.name.replace("🎟️・", "").replace("🔒・", "");
+      const num = ch.name.replace("🎟️・", "");
       await ch.setName(`🔒・${num}`);
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`open_${ch.id}`)
-          .setLabel("🔓 فتح")
-          .setStyle(ButtonStyle.Success),
+      const open = new ButtonBuilder()
+        .setCustomId("open")
+        .setLabel("🔓 فتح")
+        .setStyle(ButtonStyle.Success);
 
-        new ButtonBuilder()
-          .setCustomId(`delete_${ch.id}`)
-          .setLabel("🗑️ حذف")
-          .setStyle(ButtonStyle.Danger)
-      );
+      const del = new ButtonBuilder()
+        .setCustomId("delete")
+        .setLabel("🗑️ حذف")
+        .setStyle(ButtonStyle.Danger);
 
       await interaction.update({
         content: "🔒 تم إغلاق التذكرة",
         embeds: [],
-        components: [row]
+        components: [new ActionRowBuilder().addComponents(open, del)]
       });
     }
 
-    // 🔓 فتح
-    if (interaction.customId.startsWith("open_")) {
+    // 🔓 فتح (مصلح نهائي)
+    if (interaction.customId === "open") {
 
       const ch = interaction.channel;
       const userId = ch.topic;
@@ -171,25 +169,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
         ReadMessageHistory: true
       });
 
-      const num = ch.name.replace("🔒・", "").replace("🎟️・", "");
+      const num = ch.name.replace("🔒・", "");
       await ch.setName(`🎟️・${num}`);
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`close_${ch.id}`)
-          .setLabel("🔒 إغلاق التذكرة")
-          .setStyle(ButtonStyle.Danger)
-      );
+      const close = new ButtonBuilder()
+        .setCustomId("close")
+        .setLabel("🔒 إغلاق التذكرة")
+        .setStyle(ButtonStyle.Danger);
 
       await interaction.update({
         content: "🎫 تم فتح التذكرة",
         embeds: [],
-        components: [row]
+        components: [new ActionRowBuilder().addComponents(close)]
       });
     }
 
     // 🗑️ حذف
-    if (interaction.customId.startsWith("delete_")) {
+    if (interaction.customId === "delete") {
       await interaction.reply({ content: "🗑️ جاري الحذف...", ephemeral: true });
       setTimeout(() => interaction.channel.delete(), 2000);
     }
