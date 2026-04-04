@@ -17,21 +17,18 @@ const client = new Client({
 
 const TARGET_CHANNEL_ID = "1475334190034587661";
 
-let lastPlayTime = 0;
-const COOLDOWN = 15;
+let isPlaying = false;
 
 client.on('ready', () => {
-  console.log(`✅ شغال: ${client.user.tag}`);
+  console.log(`Bot is ready: ${client.user.tag}`);
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
 
   if (!oldState.channel && newState.channelId === TARGET_CHANNEL_ID) {
 
-    const now = Date.now() / 1000;
-    if (now - lastPlayTime < COOLDOWN) return;
-
-    lastPlayTime = now;
+    if (isPlaying) return;
+    isPlaying = true;
 
     try {
       const connection = joinVoiceChannel({
@@ -50,10 +47,18 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
       player.on(AudioPlayerStatus.Idle, () => {
         connection.destroy();
+        isPlaying = false;
+      });
+
+      player.on('error', error => {
+        console.log('Audio error:', error);
+        connection.destroy();
+        isPlaying = false;
       });
 
     } catch (error) {
-      console.log("❌ خطأ:", error);
+      console.log('Error:', error);
+      isPlaying = false;
     }
   }
 });
