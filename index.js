@@ -23,15 +23,17 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-// 🔥 الايديات (جاهزة)
+// 🔥 الايديات (كلها جاهزة)
 const SUPPORT_CATEGORY = "1489844874948907108";
 const COMPLAINT_CATEGORY = "1489830376674295991";
 const QUESTION_CATEGORY = "1489844828404584469";
+const ADMIN_CATEGORY = "1489854271351427092";
+const SUGGEST_CATEGORY = "1489854304851464292";
 
-const HIGH_ADMIN_ROLE = "1475334752436359320";
+const ADMIN_ROLE = "1475334752436359320";
 const LOG_CHANNEL_ID = "1489840541247213781";
 
-// 📁 عداد
+// 📊 عداد التذاكر
 let ticketData = {};
 if (fs.existsSync("tickets.json")) {
   ticketData = JSON.parse(fs.readFileSync("tickets.json"));
@@ -41,7 +43,7 @@ client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
 });
 
-// 📩 بانل
+// 📩 البانل
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
@@ -49,7 +51,27 @@ client.on("messageCreate", async (message) => {
 
     const embed = new EmbedBuilder()
       .setTitle("📩 نظام التذاكر")
-      .setDescription("اختر نوع التذكرة من القائمة 👇")
+      .setDescription(`
+📩 **الدعم الفني**
+مساعدة في مشاكل السيرفر (للألعاب)
+
+⛔ **الشكاوي**
+عندك مشكلة مع شخص في السيرفر
+
+❓ **الاستفسارات**
+أسئلة عن السيرفر
+
+📝 **تقديم الإدارة**
+تقديم على الإدارة
+
+💼 **الاقتراحات**
+اقتراحاتك لتطوير السيرفر
+
+━━━━━━━━━━━━━━━━━━
+
+⚠️ اختر القسم الصحيح
+وسيتم الرد عليك في أقرب وقت
+      `)
       .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
 
     const menu = new StringSelectMenuBuilder()
@@ -58,7 +80,9 @@ client.on("messageCreate", async (message) => {
       .addOptions([
         { label: "الدعم الفني", value: "support", emoji: "📩" },
         { label: "الشكاوي", value: "complaint", emoji: "⛔" },
-        { label: "الاستفسارات", value: "question", emoji: "❓" }
+        { label: "الاستفسارات", value: "question", emoji: "❓" },
+        { label: "تقديم الإدارة", value: "admin", emoji: "📝" },
+        { label: "الاقتراحات", value: "suggestion", emoji: "💼" }
       ]);
 
     const row = new ActionRowBuilder().addComponents(menu);
@@ -67,7 +91,7 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// 🎯 فتح تذكرة
+// 🎫 فتح التذكرة
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isStringSelectMenu()) return;
 
@@ -91,6 +115,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
     key = "question";
   }
 
+  if (type === "admin") {
+    category = ADMIN_CATEGORY;
+    key = "admin";
+  }
+
+  if (type === "suggestion") {
+    category = SUGGEST_CATEGORY;
+    key = "suggestion";
+  }
+
   if (!ticketData[key]) ticketData[key] = 1;
 
   const number = ticketData[key];
@@ -112,7 +146,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         allow: [PermissionsBitField.Flags.ViewChannel],
       },
       {
-        id: HIGH_ADMIN_ROLE,
+        id: ADMIN_ROLE,
         allow: [PermissionsBitField.Flags.ViewChannel],
       }
     ],
@@ -120,11 +154,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   const embed = new EmbedBuilder()
     .setTitle("🎫 تذكرة جديدة")
-    .setDescription(`👤 ${interaction.user}\n🔢 رقم: ${number}`);
+    .setDescription(`
+👤 صاحب التذكرة: ${interaction.user}
+
+🔢 رقم التذكرة: ${number}
+
+📌 اكتب تفاصيلك هنا وسيتم الرد عليك
+    `);
 
   const closeBtn = new ButtonBuilder()
     .setCustomId("close")
-    .setLabel("🔒 إغلاق")
+    .setLabel("🔒 إغلاق التذكرة")
     .setStyle(ButtonStyle.Danger);
 
   const row = new ActionRowBuilder().addComponents(closeBtn);
@@ -137,7 +177,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   });
 
   const log = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
-  if (log) log.send(`📩 ${channel}`);
+  if (log) log.send(`📩 تذكرة جديدة: ${channel}`);
 });
 
 // ❌ إغلاق
