@@ -126,7 +126,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await channel.send({ embeds: [embed], components: [row] });
 
-      // 📜 لوق (رسالة وحدة)
       if (log) {
         const msg = await log.send({
           embeds: [
@@ -149,13 +148,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 📌 استلام
+    // 📌 استلام (تم إضافة شرط الإدارة فقط)
     if (interaction.isButton() && interaction.customId === "claim") {
 
       const ch = interaction.channel;
 
+      if (!interaction.member.roles.cache.has(STAFF_ROLE)) {
+        return interaction.reply({
+          content: "❌ هذا الزر خاص بالإدارة فقط",
+          ephemeral: true
+        });
+      }
+
       if (claimedTickets[ch.id]) {
-        return interaction.reply({ content: "❌ التذكرة مستلمة", ephemeral: true });
+        return interaction.reply({ content: "❌ التذكرة مستلمة مسبقًا", ephemeral: true });
       }
 
       claimedTickets[ch.id] = interaction.user;
@@ -179,7 +185,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `📌 تم استلام التذكرة بواسطة ${interaction.user}` });
     }
 
-    // 🔒🔓 إغلاق / فتح
+    // 🔒🔓
     if (interaction.isButton() && interaction.customId === "toggle") {
 
       const ch = interaction.channel;
