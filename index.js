@@ -20,7 +20,7 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-// 🎭 الرول
+// 🎭 رول الستاف
 const STAFF_ROLE = "1475334752436359320";
 
 // 📁 الكاتقوري
@@ -47,22 +47,23 @@ client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
 });
 
-// 📌 بانل
+
+// 📌 بانل (تم إصلاح الشكل)
 client.on("messageCreate", async (msg) => {
   if (msg.content === "!panel") {
 
     const embed = new EmbedBuilder()
       .setColor("#2b2d31")
       .setTitle("📩 نظام التذاكر")
-      .setDescription(`
-📩 الدعم الفني  
-🚫 الشكاوي  
-❓ الاستفسارات  
-📝 تقديم الإدارة  
-💡 الاقتراحات  
-
-👇 اختر نوع التذكرة
-`);
+      .setDescription(
+        "📩 نظام التذاكر\n\n" +
+        "📩 الدعم الفني\n" +
+        "🚫 الشكاوي\n" +
+        "❓ الاستفسارات\n" +
+        "📝 تقديم الإدارة\n" +
+        "💡 الاقتراحات\n\n" +
+        "👇 اختر نوع التذكرة"
+      );
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId("support").setLabel("الدعم الفني").setStyle(ButtonStyle.Primary),
@@ -125,7 +126,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 🔒 إغلاق
+    // 🔒 إغلاق (مصلح)
     if (interaction.customId === "close") {
 
       const ch = interaction.channel;
@@ -136,7 +137,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         SendMessages: false
       });
 
-      await ch.setName(`🔒・${ch.name.replace("🎟️・", "")}`);
+      const num = ch.name.replace("🎟️・", "");
+      await ch.setName(`🔒・${num}`);
 
       const open = new ButtonBuilder()
         .setCustomId("open")
@@ -155,7 +157,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
     }
 
-    // 🔓 فتح (تم إصلاحه)
+    // 🔓 فتح (مصلح نهائي)
     if (interaction.customId === "open") {
 
       const ch = interaction.channel;
@@ -163,10 +165,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await ch.permissionOverwrites.edit(userId, {
         ViewChannel: true,
-        SendMessages: true
+        SendMessages: true,
+        ReadMessageHistory: true
       });
 
-      await ch.setName(`🎟️・${ch.name.replace("🔒・", "")}`);
+      const num = ch.name.replace("🔒・", "");
+      await ch.setName(`🎟️・${num}`);
 
       const close = new ButtonBuilder()
         .setCustomId("close")
@@ -174,7 +178,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setStyle(ButtonStyle.Danger);
 
       await interaction.update({
-        content: "",
+        content: "🎫 تم فتح التذكرة",
+        embeds: [],
         components: [new ActionRowBuilder().addComponents(close)]
       });
     }
