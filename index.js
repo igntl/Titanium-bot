@@ -67,7 +67,6 @@ client.on("messageCreate", async (message) => {
 💼 **الاقتراحات**
 اقتراحاتك لتطوير السيرفر
 
-
 ⚠️ اختر القسم الصحيح
 وسيتم الرد عليك قريبًا
       `)
@@ -144,10 +143,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
       {
         id: interaction.user.id,
         allow: [PermissionsBitField.Flags.ViewChannel],
+        allow: [PermissionsBitField.Flags.SendMessages],
       },
       {
         id: ADMIN_ROLE,
-        allow: [PermissionsBitField.Flags.ViewChannel],
+        allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
       }
     ],
   });
@@ -195,7 +195,7 @@ type === "admin" ? "تقديم الإدارة" :
   });
 });
 
-// ❌ إغلاق + لوق احترافي
+// 🔒 إغلاق بدون حذف + لوق
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
@@ -207,6 +207,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const createdAt = channel.createdAt;
     const now = new Date();
 
+    // 🔒 منع العضو
+    await channel.permissionOverwrites.edit(channel.topic, {
+      ViewChannel: false,
+      SendMessages: false
+    });
+
+    // 🔒 اسم مع قفل بدون تخريب الرقم
+    await channel.setName(`🔒・${channel.name.replace("🔒・", "")}`);
+
+    // 🔒 رسالة داخل التذكرة
+    await channel.send("🔒 تم إغلاق التذكرة");
+
+    // 📁 لوق
     const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
 
     const embed = new EmbedBuilder()
@@ -224,18 +237,13 @@ ${user}
 
 📅 **وقت الإغلاق:**
 <t:${Math.floor(now.getTime() / 1000)}:F>
-      `)
-      .setFooter({ text: "Titanium System" });
+      `);
 
     if (logChannel) {
       logChannel.send({ embeds: [embed] });
     }
 
-    await interaction.reply({ content: "🔒 جاري الإغلاق..." });
-
-    setTimeout(() => {
-      channel.delete();
-    }, 2000);
+    await interaction.reply({ content: "✅ تم إغلاق التذكرة" });
   }
 });
 
