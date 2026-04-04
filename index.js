@@ -43,7 +43,7 @@ client.once("ready", () => {
   console.log(`✅ ${client.user.tag} شغال`);
 });
 
-// 📩 البانل
+// 📩 panel
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
@@ -57,6 +57,8 @@ client.on("messageCreate", async (message) => {
 ❓ الاستفسارات
 📝 تقديم الإدارة
 💼 الاقتراحات
+
+اختر نوع التذكرة 👇
       `)
       .setImage("https://cdn.discordapp.com/attachments/1489280825068355728/1489848480078758029/6D0A7BEB-D183-459D-BB4E-5559F8AC5779.png");
 
@@ -77,7 +79,7 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// 🎫 فتح
+// 🎫 فتح التذكرة
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isStringSelectMenu()) return;
 
@@ -100,7 +102,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   fs.writeFileSync("tickets.json", JSON.stringify(ticketData));
 
   const channel = await interaction.guild.channels.create({
-    name: `🎫・${number}`,
+    name: `${number}`, // رقم فقط
     type: ChannelType.GuildText,
     parent: category,
     topic: interaction.user.id,
@@ -111,33 +113,59 @@ client.on(Events.InteractionCreate, async (interaction) => {
     ],
   });
 
+  const embed = new EmbedBuilder()
+    .setColor("#2b2d31")
+    .setDescription(`
+🎫 **معلومات التذكرة**
+
+👤 **مالك التذكرة:**
+${interaction.user}
+
+🛡️ **مشرفي التذاكر:**
+<@&${ADMIN_ROLE}>
+
+📅 **تاريخ التذكرة:**
+<t:${Math.floor(Date.now()/1000)}:F>
+
+🔢 **رقم التذكرة:**
+${number}
+
+📂 **قسم التذكرة:**
+${type === "support" ? "الدعم الفني" :
+type === "complaint" ? "الشكاوي" :
+type === "question" ? "الاستفسارات" :
+type === "admin" ? "تقديم الإدارة" :
+"الاقتراحات"}
+
+✍️ الرجاء كتابة مشكلتك بالتفصيل
+وسيتم الرد عليك قريبًا
+`);
+
   const closeBtn = new ButtonBuilder()
     .setCustomId("close")
-    .setLabel("🔒 إغلاق")
+    .setLabel("🔒 إغلاق التذكرة")
     .setStyle(ButtonStyle.Danger);
 
   const row = new ActionRowBuilder().addComponents(closeBtn);
 
-  await channel.send({ content: `👋 ${interaction.user}`, components: [row] });
+  await channel.send({ embeds: [embed], components: [row] });
 
   await interaction.reply({ content: "✅ تم فتح التذكرة", ephemeral: true });
 });
 
-// 🔒 إغلاق + أزرار
+// 🔒 / 🔓 / 🗑️
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
   const channel = interaction.channel;
 
-  // 🔒 اغلاق
+  // 🔒 إغلاق
   if (interaction.customId === "close") {
 
     await channel.permissionOverwrites.edit(channel.topic, {
       ViewChannel: false,
       SendMessages: false
     });
-
-    await channel.setName(`🔒・${channel.name.replace("🎫・", "").replace("🔒・", "")}`);
 
     const openBtn = new ButtonBuilder()
       .setCustomId("open")
@@ -167,14 +195,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
       SendMessages: true
     });
 
-    await channel.setName(`🎫・${channel.name.replace("🔒・", "")}`);
+    const closeBtn = new ButtonBuilder()
+      .setCustomId("close")
+      .setLabel("🔒 إغلاق التذكرة")
+      .setStyle(ButtonStyle.Danger);
 
-    await interaction.reply("🔓 تم فتح التذكرة");
+    const row = new ActionRowBuilder().addComponents(closeBtn);
+
+    await channel.send({
+      content: "🔓 تم إعادة فتح التذكرة",
+      components: [row]
+    });
+
+    await interaction.reply({ content: "✅ تم الفتح", ephemeral: true });
   }
 
   // 🗑️ حذف
   if (interaction.customId === "delete") {
-    await interaction.reply("🗑️ جاري الحذف...");
+    await interaction.reply("🗑️ جاري حذف التذكرة...");
     setTimeout(() => channel.delete(), 2000);
   }
 });
