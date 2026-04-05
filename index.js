@@ -148,7 +148,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `تم إنشاء التذكرة: ${channel}`, ephemeral: true });
     }
 
-    // 📌 استلام (تم إضافة شرط الإدارة فقط)
+    // 📌 استلام
     if (interaction.isButton() && interaction.customId === "claim") {
 
       const ch = interaction.channel;
@@ -185,7 +185,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({ content: `📌 تم استلام التذكرة بواسطة ${interaction.user}` });
     }
 
-    // 🔒🔓
+    // 🔒🔓 (هنا التعديل فقط 🔥)
     if (interaction.isButton() && interaction.customId === "toggle") {
 
       const ch = interaction.channel;
@@ -198,7 +198,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (!isClosed) {
 
-        await ch.permissionOverwrites.edit(ch.topic, { SendMessages: false });
+        // 🔴 إخفاء التذكرة عن العضو
+        await ch.permissionOverwrites.edit(ch.topic, {
+          ViewChannel: false,
+          SendMessages: false
+        });
+
         const num = ch.name.replace("🎫・تذكرة-", "");
         await ch.setName(`🔒・تذكرة-${num}`);
 
@@ -220,7 +225,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       } else {
 
-        await ch.permissionOverwrites.edit(ch.topic, { SendMessages: true });
+        // 🟢 ترجع له عند الفتح
+        await ch.permissionOverwrites.edit(ch.topic, {
+          ViewChannel: true,
+          SendMessages: true
+        });
+
         const num = ch.name.replace("🔒・تذكرة-", "");
         await ch.setName(`🎫・تذكرة-${num}`);
 
