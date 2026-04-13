@@ -19,7 +19,7 @@ const client = new Client({
 });
 
 const TOKEN = process.env.TOKEN;
-const CHANNEL_ID = "1359414548184043570";
+const CHANNEL_ID = "1483219896069525665";
 
 // 🔥 حط هنا ايدي روم الإعلانات
 const ANNOUNCE_CHANNEL = "حط_الايدي_هنا";
