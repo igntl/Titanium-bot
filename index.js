@@ -1,7 +1,11 @@
 const {
   Client,
   GatewayIntentBits,
-  EmbedBuilder
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Events
 } = require("discord.js");
 
 const fs = require("fs");
@@ -33,72 +37,28 @@ if (fs.existsSync("wins.json")) wins = JSON.parse(fs.readFileSync("wins.json"));
 if (fs.existsSync("totalWins.json")) totalWins = JSON.parse(fs.readFileSync("totalWins.json"));
 if (fs.existsSync("division.json")) divisionCount = JSON.parse(fs.readFileSync("division.json"));
 
-// 🔥 رسائل احترافية (خطف اللقب)
+// 🔥 رسائل اللقب
 const winnerMessages = [
+`🔥 ها هو البطل {user} يخطف اللقب بعد منافسة شرسة ويؤكد سيطرته الكاملة على التقسيمات!
 
-`🔥 ها هو {user} يخطف اللقب بكل قوة بعد سلسلة مواجهات شرسة لم تخلُ من التحديات!
+💪 لم يكن الطريق سهلًا، لكنه أثبت أنه حاضر في أصعب اللحظات.
 
-💪 لم يكن الطريق سهلًا، لكن بالإصرار والتركيز العالي، استطاع فرض سيطرته والتفوق على الجميع بثقة وثبات.
+👑 يواصل فرض اسمه في القمة ويؤكد أنه من نخبة اللاعبين!`,
 
-👑 {user} لا يحقق الفوز فقط… بل ينتزع اللقب ويثبت أنه أحد أقوى الكباتن في الساحة!`,
+`🔥 بعد صراع قوي، يتمكن {user} من انتزاع اللقب والتربع على عرش التقسيمات بكل جدارة!
 
-`🔥 أخيرًا وبعد منافسة محتدمة، يتمكن {user} من خطف اللقب وسط أجواء مليئة بالحماس والإثارة!
+💪 أداء ثابت وتحكم كامل في المباريات.
 
-💪 أداء ثابت، قرارات ذكية، وسيطرة واضحة جعلت منه اللاعب الأكثر تأثيرًا خلال التقسيمات.
+👑 اسم يثبت نفسه بقوة في كل تقسيمة!`,
 
-👑 {user} يكتب اسمه في القمة من جديد ويؤكد أن مكانه بين الكبار ليس صدفة!`,
+`🔥 ختام ناري لتقسيمات اليوم، و{user} هو من يخطف اللقب بعد أداء استثنائي!
 
-`🔥 لحظة حاسمة تنتهي بتتويج {user} بعد أن نجح في خطف اللقب من بين أقوى المنافسين!
+💪 سيطرة واضحة وثقة عالية.
 
-💪 قدم أداءً استثنائيًا يعكس خبرته وثباته تحت الضغط في أصعب اللحظات.
-
-👑 {user} يثبت أنه الرقم الصعب الذي لا يمكن تجاوزه بسهولة!`,
-
-`🔥 بعد معارك طويلة داخل الميدان، يظهر {user} ليخطف اللقب بكل جدارة واستحقاق!
-
-💪 لم يترك مجالًا للخصوم، بل فرض أسلوبه وسيطر على مجريات اللعب بالكامل.
-
-👑 {user} يواصل الهيمنة ويؤكد أنه حاضر دائمًا في القمة!`,
-
-`🔥 عرض كروي مذهل ينتهي بخطف {user} للقب بعد أداء لا يُنسى!
-
-💪 تحكم كامل، تركيز عالي، وروح قتالية جعلته يتفوق على الجميع.
-
-👑 {user} لا ينافس فقط… بل يهيمن ويصنع الفارق!`,
-
-`🔥 من بين كل المنافسين، ينجح {user} في خطف اللقب بعد أداء قوي وثبات طوال التقسيمات!
-
-💪 كل مباراة كانت إثباتًا جديدًا على قدراته العالية.
-
-👑 {user} يرسّخ اسمه في القمة ويؤكد أنه من النخبة!`,
-
-`🔥 نهاية مثيرة لتقسيمات نارية، و{user} هو من يخطف اللقب ويكتب اسمه في الصدارة!
-
-💪 أداء مميز وتحكم كامل بالمباريات جعله الأفضل دون منازع.
-
-👑 {user} يواصل التألق ويؤكد أنه حاضر دائمًا عندما تُحسم الأمور!`,
-
-`🔥 بعد منافسة لا تُرحم، يتمكن {user} من انتزاع اللقب وإثبات تفوقه على الجميع!
-
-💪 لم يكن مجرد فوز، بل عرض للقوة والثقة والخبرة.
-
-👑 {user} يثبت أنه أحد أعمدة القمة في هذه الساحة!`,
-
-`🔥 ها هو {user} يعود من جديد ويخطف اللقب بعد أداء أسطوري بكل المقاييس!
-
-💪 سيطرة واضحة وثبات في المستوى طوال التقسيمات.
-
-👑 {user} يثبت أنه لا يسقط… بل يعود أقوى!`,
-
-`🔥 ختام ناري لتقسيمات مليئة بالحماس، و{user} هو من يحسمها ويخطف اللقب!
-
-💪 لم يترك أي فرصة، بل فرض نفسه كأفضل لاعب في هذه الجولة.
-
-👑 {user} يواصل كتابة التاريخ داخل هذه الساحة!`
-
+👑 يثبت أنه الرقم الصعب دائمًا!`
 ];
 
-// 🏆 لوحة الشرف
+// 🏆 لوحة الشرف (ما تغيرت)
 async function updateLeaderboard(channel) {
   const sorted = Object.entries(wins).sort((a, b) => b[1] - a[1]);
 
@@ -128,16 +88,17 @@ client.on("messageCreate", async (msg) => {
 
   const content = msg.content;
 
-  // أوامر العرض
+  // 📊 لوحة الشرف
   if (content === "!board" || content === "!top") {
     leaderboardMessageId = null;
     await updateLeaderboard(msg.channel);
-    return msg.channel.send("📊 تم عرض لوحة الشرف");
+    return msg.reply("📊 تم عرض لوحة الشرف");
   }
 
+  // 📈 إحصائيات الأسبوع
   if (content === "!all") {
     const sorted = Object.entries(wins).sort((a, b) => b[1] - a[1]);
-    if (!sorted.length) return msg.channel.send("❌ لا يوجد بيانات");
+    if (!sorted.length) return msg.reply("❌ لا يوجد بيانات");
 
     const text = sorted.map((p, i) =>
       `${i+1}- <@${p[0]}> : ${p[1]} فوز`
@@ -151,9 +112,10 @@ client.on("messageCreate", async (msg) => {
     });
   }
 
+  // 🏆 إحصائيات دائمة
   if (content === "!total") {
     const sorted = Object.entries(totalWins).sort((a, b) => b[1] - a[1]);
-    if (!sorted.length) return msg.channel.send("❌ لا يوجد بيانات");
+    if (!sorted.length) return msg.reply("❌ لا يوجد بيانات");
 
     const text = sorted.map((p, i) =>
       `${i+1}- <@${p[0]}> : ${p[1]} فوز`
@@ -167,12 +129,61 @@ client.on("messageCreate", async (msg) => {
     });
   }
 
-  // حذف الأوامر
-  if (content.startsWith("!")) {
-    try { await msg.delete(); } catch {}
+  // ➕ إضافة فوز
+  if (content.startsWith("!addwin")) {
+    const user = msg.mentions.users.first();
+    const amount = parseInt(content.split(" ")[2]) || 1;
+
+    if (!user) return msg.channel.send("حدد شخص");
+
+    if (!wins[user.id]) wins[user.id] = 0;
+    if (!totalWins[user.id]) totalWins[user.id] = 0;
+
+    wins[user.id] += amount;
+    totalWins[user.id] += amount;
+
+    fs.writeFileSync("wins.json", JSON.stringify(wins, null, 2));
+    fs.writeFileSync("totalWins.json", JSON.stringify(totalWins, null, 2));
+
+    return msg.channel.send(`✅ تم إضافة ${amount} فوز لـ ${user}`);
   }
 
-  // done
+  // ➖ إزالة فوز
+  if (content.startsWith("!removewin")) {
+    const user = msg.mentions.users.first();
+    const amount = parseInt(content.split(" ")[2]) || 1;
+
+    if (!user) return msg.channel.send("حدد شخص");
+    if (!wins[user.id]) return msg.channel.send("ما عنده فوز");
+
+    wins[user.id] -= amount;
+    if (wins[user.id] <= 0) delete wins[user.id];
+
+    fs.writeFileSync("wins.json", JSON.stringify(wins, null, 2));
+
+    return msg.channel.send(`❌ تم إزالة ${amount} فوز من ${user}`);
+  }
+
+  // ♻️ تصفير الأسبوع
+  if (content === "!resetweek") {
+    wins = {};
+    leaderboardMessageId = null;
+    fs.writeFileSync("wins.json", "{}");
+    return msg.channel.send("♻️ تم تصفير لوحة الأسبوع فقط");
+  }
+
+  // ↩️ undo
+  if (content.startsWith("!undo")) {
+    const number = parseInt(content.split(" ")[1]);
+    if (isNaN(number)) return msg.channel.send("❌ حط رقم صحيح");
+
+    divisionCount = number;
+    fs.writeFileSync("division.json", JSON.stringify(divisionCount));
+
+    return msg.channel.send(`↩️ تم تعديل التقسيمات إلى (${divisionCount}/10)`);
+  }
+
+  // 🎯 done
   if (content.startsWith("!done")) {
 
     const number = parseInt(content.split(" ")[1]);
@@ -192,7 +203,17 @@ client.on("messageCreate", async (msg) => {
       if (!sorted.length) return;
 
       const topId = sorted[0][0];
+      const topWins = sorted[0][1];
 
+      // إعلانك الأساسي
+      await msg.channel.send({
+        embeds: [new EmbedBuilder()
+          .setColor("#ffd700")
+          .setTitle("🏆 كابتن التقسيمة")
+          .setDescription(`👑 <@${topId}> هو الأكثر فوز!\n🔥 عدد الفوز: ${topWins}`)]
+      });
+
+      // 🔥 إعلان الروم الثاني
       const randomMsg = winnerMessages[Math.floor(Math.random() * winnerMessages.length)];
       const finalMsg = randomMsg.replace("{user}", `<@${topId}>`);
 
@@ -208,7 +229,47 @@ client.on("messageCreate", async (msg) => {
       fs.writeFileSync("wins.json", "{}");
       fs.writeFileSync("division.json", "0");
     }
+
+    return;
   }
+
+  // 🔥 تسجيل الفوز (لم نلمسه نهائيًا)
+  let winnerId = null;
+  const mentions = [...content.matchAll(/<@!?(\d+)>/g)];
+
+  if (content.includes("الفائز") && mentions.length > 0) {
+    winnerId = mentions[mentions.length - 1][1];
+  }
+
+  if (!winnerId) return;
+
+  const winner = msg.guild.members.cache.get(winnerId)?.user;
+  if (!winner) return;
+
+  const players = Array.from(msg.mentions.users.values());
+  if (players.length < 2) return;
+
+  const ids = [players[0].id, players[1].id].sort();
+  const key = `${ids[0]}-${ids[1]}`;
+
+  if (recentMatches[key] && Date.now() - recentMatches[key] < 60000) {
+    return msg.reply("❌ لا تسجل نفس المباراة مرتين خلال دقيقة");
+  }
+
+  recentMatches[key] = Date.now();
+
+  if (!wins[winner.id]) wins[winner.id] = 0;
+  if (!totalWins[winner.id]) totalWins[winner.id] = 0;
+
+  wins[winner.id]++;
+  totalWins[winner.id]++;
+
+  fs.writeFileSync("wins.json", JSON.stringify(wins, null, 2));
+  fs.writeFileSync("totalWins.json", JSON.stringify(totalWins, null, 2));
+
+  msg.reply(`🏆 ${winner} فاز!\n🔥 مجموع فوزه: ${wins[winner.id]}`);
+
+  updateLeaderboard(msg.channel);
 });
 
 client.once("ready", () => {
