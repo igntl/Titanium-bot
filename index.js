@@ -22,7 +22,7 @@ const TOKEN = process.env.TOKEN;
 const CHANNEL_ID = "1483219896069525665";
 
 // 🔥 حط هنا ايدي روم الإعلانات
-const ANNOUNCE_CHANNEL = "حط_الايدي_هنا";
+const ANNOUNCE_CHANNEL = "1489912837592842294";
 
 let wins = {};
 let totalWins = {};
