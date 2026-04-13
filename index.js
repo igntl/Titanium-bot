@@ -98,9 +98,21 @@ client.on("messageCreate", async (msg) => {
 
   const content = msg.content;
 
-  if (content.startsWith("!")) {
-    try { await msg.delete(); } catch {}
-  }
+  const isCommand =
+  content.startsWith("!addwin") ||
+  content.startsWith("!removewin") ||
+  content === "!resetweek" ||
+  content.startsWith("!done") ||
+  content.startsWith("!undo") ||
+  content === "!board" ||
+  content === "!top" ||
+  content === "!all" ||
+  content === "!total" ||
+  content === "!res";
+
+if (isCommand) {
+  try { await msg.delete(); } catch {}
+}
 
   // ➕ إضافة فوز
   if (content.startsWith("!addwin")) {
