@@ -144,6 +144,34 @@ client.on("messageCreate", async (msg) => {
 
   const content = msg.content;
 
+  client.on("messageCreate", async (msg) => {
+  if (msg.author.bot) return;
+  if (msg.channel.id !== CHANNEL_ID) return;
+
+  const content = msg.content;
+
+  // 🔥 تصفير كامل
+  if (content === "!res") {
+
+    if (!msg.member.permissions.has("Administrator")) {
+      return msg.channel.send("❌ هذا الأمر للإدارة فقط");
+    }
+
+    wins = {};
+    totalWins = {};
+    divisionCount = 0;
+    leaderboardMessageId = null;
+
+    fs.writeFileSync("wins.json", "{}");
+    fs.writeFileSync("totalWins.json", "{}");
+    fs.writeFileSync("division.json", "0");
+
+    return msg.channel.send("♻️ تم تصفير جميع الإحصائيات");
+  }
+
+  // 📊 لوحة الشرف
+  if (content === "!board" || content === "!top") {
+
   // 📊 لوحة الشرف
   if (content === "!board" || content === "!top") {
     leaderboardMessageId = null;
@@ -288,6 +316,7 @@ client.on("messageCreate", async (msg) => {
 
     return;
   }
+
 
   // 🔥 تسجيل الفوز (لم نلمسه نهائيًا)
   let winnerId = null;
