@@ -30,49 +30,19 @@ if (fs.existsSync("wins.json")) wins = JSON.parse(fs.readFileSync("wins.json"));
 if (fs.existsSync("totalWins.json")) totalWins = JSON.parse(fs.readFileSync("totalWins.json"));
 if (fs.existsSync("division.json")) divisionCount = JSON.parse(fs.readFileSync("division.json"));
 
-// 🔥 رسائل كثيرة (تقدر تزودها براحتك)
+// 🔥 رسائل اللقب
 const winnerMessages = [
-`🔥 ها هو البطل {user} يخطف اللقب بعد منافسة شرسة!
-💪 أثبت قوته في كل مواجهة.
-👑 يستحق القمة.`,
+`🔥 بعد منافسة قوية، ينجح {user} في خطف اللقب بعد أداء استثنائي!
+💪 لم يترك فرصة للخصوم وفرض سيطرته.
+👑 يستحق التتويج بكل جدارة.`,
 
-`🔥 بعد صراع طويل، يتمكن {user} من فرض نفسه وخطف اللقب!
-💪 أداء ثابت وثقة عالية.
-👑 بطل حقيقي.`,
+`🔥 في ليلة نارية، يظهر {user} ليحسم اللقب بعد أداء مذهل!
+💪 سيطرة وثقة عالية.
+👑 بطل التقسيمات بلا منازع.`,
 
-`🔥 ليلة نارية تنتهي بتتويج {user} باللقب!
-💪 سيطرة كاملة على المباريات.
-👑 يستحق التتويج.`,
-
-`🔥 منافسة قوية تنتهي بتفوق {user} وخطفه اللقب!
-💪 لم يترك فرصة للخصوم.
-👑 اسم في القمة.`,
-
-`🔥 ختام مثير للتقسيمات، و{user} يحسم اللقب!
-💪 لعب بذكاء وثبات.
-👑 يستحق هذا الإنجاز.`,
-
-`🔥 بعد ضغط ومنافسة، يظهر {user} كبطل!
-💪 ثقة عالية وأداء ثابت.
-👑 القمة له.`,
-
-`🔥 أداء استثنائي من {user} ينتهي بخطف اللقب!
-💪 سيطرة كاملة.
-👑 بطل التقسيمات.`,
-
-`🔥 بعد مواجهات صعبة، {user} يحسم اللقب!
-💪 ثبات عالي.
-👑 يستحق.`,
-
-`🔥 صراع قوي ينتهي بتتويج {user}!
-💪 أداء متكامل.
-👑 بطل.`,
-
-`🔥 {user} يثبت نفسه ويخطف اللقب!
-💪 قوة وثقة.
-👑 القمة.`
-
-// 🔥 تقدر تضيف هنا لين توصل 100 بنفس النمط
+`🔥 ختام حماسي للتقسيمات، و{user} هو من يخطف اللقب!
+💪 لعب بثبات واحترافية عالية.
+👑 يستحق القمة.`
 ];
 
 // 🏆 لوحة الشرف
@@ -104,7 +74,7 @@ client.on("messageCreate", async (msg) => {
 
   const content = msg.content;
 
-  // 🔥 تصفير كامل (يشتغل بأي روم)
+  // 🔥 تصفير كامل
   if (content === "!res") {
 
     if (!msg.member.permissions.has("Administrator")) {
@@ -133,7 +103,7 @@ client.on("messageCreate", async (msg) => {
     return msg.reply("📊 تم عرض لوحة الشرف");
   }
 
-  // 📈 الأسبوع
+  // 📈 إحصائيات الأسبوع
   if (content === "!all") {
     const sorted = Object.entries(wins).sort((a, b) => b[1] - a[1]);
     if (!sorted.length) return msg.reply("❌ لا يوجد بيانات");
@@ -150,7 +120,7 @@ client.on("messageCreate", async (msg) => {
     });
   }
 
-  // 🏆 الكلي
+  // 🏆 إحصائيات دائمة
   if (content === "!total") {
     const sorted = Object.entries(totalWins).sort((a, b) => b[1] - a[1]);
     if (!sorted.length) return msg.reply("❌ لا يوجد بيانات");
@@ -165,6 +135,41 @@ client.on("messageCreate", async (msg) => {
         .setTitle("🏆 الإحصائيات الكاملة")
         .setDescription(text)]
     });
+  }
+
+  // ➕ إضافة فوز
+  if (content.startsWith("!addwin")) {
+    const user = msg.mentions.users.first();
+    const amount = parseInt(content.split(" ")[2]) || 1;
+
+    if (!user) return msg.channel.send("حدد شخص");
+
+    if (!wins[user.id]) wins[user.id] = 0;
+    if (!totalWins[user.id]) totalWins[user.id] = 0;
+
+    wins[user.id] += amount;
+    totalWins[user.id] += amount;
+
+    fs.writeFileSync("wins.json", JSON.stringify(wins, null, 2));
+    fs.writeFileSync("totalWins.json", JSON.stringify(totalWins, null, 2));
+
+    return msg.channel.send(`✅ تم إضافة ${amount} فوز لـ ${user}`);
+  }
+
+  // ➖ إزالة فوز
+  if (content.startsWith("!removewin")) {
+    const user = msg.mentions.users.first();
+    const amount = parseInt(content.split(" ")[2]) || 1;
+
+    if (!user) return msg.channel.send("حدد شخص");
+    if (!wins[user.id]) return msg.channel.send("ما عنده فوز");
+
+    wins[user.id] -= amount;
+    if (wins[user.id] <= 0) delete wins[user.id];
+
+    fs.writeFileSync("wins.json", JSON.stringify(wins, null, 2));
+
+    return msg.channel.send(`❌ تم إزالة ${amount} فوز من ${user}`);
   }
 
   // 🎯 done
@@ -184,14 +189,33 @@ client.on("messageCreate", async (msg) => {
       if (!sorted.length) return;
 
       const topId = sorted[0][0];
+      const topWins = sorted[0][1];
 
-      await msg.channel.send(`👑 <@${topId}> هو الفائز!`);
+      // 🏆 كارد فخم
+      await msg.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor("#FFD700")
+            .setTitle("🏆 TITANIUM CHAMPION")
+            .setDescription(`🔥 بعد منافسة نارية، ينجح 👑 <@${topId}> في خطف اللقب!
 
+💪 أداء ثابت وثقة عالية طوال التقسيمات.
+
+👑 اليوم يثبت أنه من نخبة اللاعبين في السيرفر.
+
+━━━━━━━━━━━━━━
+🔥 عدد الفوز: ${topWins}
+━━━━━━━━━━━━━━`)
+            .setFooter({ text: "TITANIUM • LEAGUE" })
+            .setTimestamp()
+        ]
+      });
+
+      // إعلان
       const randomMsg = winnerMessages[Math.floor(Math.random() * winnerMessages.length)];
       const finalMsg = randomMsg.replace("{user}", `<@${topId}>`);
 
       const announceChannel = client.channels.cache.get(ANNOUNCE_CHANNEL);
-
       if (announceChannel) {
         announceChannel.send(`${finalMsg}\n\n@everyone`);
       }
@@ -206,7 +230,7 @@ client.on("messageCreate", async (msg) => {
     return;
   }
 
-  // 🔥 تسجيل الفوز (نفس كودك)
+  // 🔥 تسجيل الفوز
   let winnerId = null;
   const mentions = [...content.matchAll(/<@!?(\d+)>/g)];
 
