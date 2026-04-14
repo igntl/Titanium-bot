@@ -195,18 +195,17 @@ client.on("messageCreate", async (msg) => {
       await msg.channel.send({
         embeds: [
           new EmbedBuilder()
-            .setColor("#FFD700")
-            .setTitle("🏆 TITANIUM CHAMPION")
+            .setColor("#347235")
+            .setTitle("🏆 TITANIUM")
             .setDescription(`🔥 بعد منافسة نارية، ينجح 👑 <@${topId}> في خطف اللقب!
 
 💪 أداء ثابت وثقة عالية طوال التقسيمات.
 
-👑 اليوم يثبت أنه من نخبة اللاعبين في السيرفر.
+👑 اليوم يثبت أنه من نخبة الكباتن في السيرفر.
 
-━━━━━━━━━━━━━━
 🔥 عدد الفوز: ${topWins}
 ━━━━━━━━━━━━━━`)
-            .setFooter({ text: "TITANIUM • LEAGUE" })
+            .setFooter({ text: "TITANIUM CAPTAIN" })
             .setTimestamp()
         ]
       });
