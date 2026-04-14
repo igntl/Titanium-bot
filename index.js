@@ -199,10 +199,6 @@ client.on("messageCreate", async (msg) => {
             .setTitle("🏆 TITANIUM")
             .setDescription(`🔥 بعد منافسة نارية، ينجح 👑 <@${topId}> في خطف اللقب!
 
-💪 أداء ثابت وثقة عالية طوال التقسيمات.
-
-👑 اليوم يثبت أنه من نخبة الكباتن في السيرفر.
-
 🔥 عدد الفوز: ${topWins}
 ━━━━━━━━━━━━━━`)
             .setFooter({ text: "TITANIUM CAPTAIN" })
