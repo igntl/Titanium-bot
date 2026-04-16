@@ -274,7 +274,7 @@ if (fs.existsSync("division.json")) divisionCount = JSON.parse(fs.readFileSync("
 
 `👑 {user} يحسم اللقب بعد سلسلة نتائج إيجابية
 يثبت أنه الأفضل في هذه الجولة
-@everyone`
+@everyone`,
 
 ];
 
