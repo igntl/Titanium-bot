@@ -610,7 +610,7 @@ client.on("messageCreate", async (msg) => {
 
       const announceChannel = client.channels.cache.get(ANNOUNCE_CHANNEL);
       if (announceChannel) {
-        announceChannel.send(`${finalMsg}\n\n@everyone`);
+        announceChannel.send(finalMsg);
       }
 
       wins = {};
