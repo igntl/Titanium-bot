@@ -30,7 +30,8 @@ if (fs.existsSync("wins.json")) wins = JSON.parse(fs.readFileSync("wins.json"));
 if (fs.existsSync("totalWins.json")) totalWins = JSON.parse(fs.readFileSync("totalWins.json"));
 if (fs.existsSync("division.json")) divisionCount = JSON.parse(fs.readFileSync("division.json"));
 
-// 🔥 رسائل اللقبconst winnerMessages = [
+// 🔥 رسائل اللقب
+const winnerMessages = [
 
 `👑 {user} يخطف لقب الكابيتانو بعد أداء ثابت وسيطرة واضحة على مجريات التقسيمات
 يثبت حضوره القوي ويؤكد أنه من نخبة المنافسين في الساحة
@@ -110,7 +111,7 @@ if (fs.existsSync("division.json")) divisionCount = JSON.parse(fs.readFileSync("
 
 `👑 {user} يحسم الكابيتانو بعد مواجهة قوية وأداء متماسك
 يثبت أنه حاضر في أصعب التحديات
-@everyone`
+@everyone`,
 
 `👑 {user} يحسم لقب الكابيتانو بعد أداء متوازن وثبات في جميع المواجهات
 يثبت أنه قادر على الحفاظ على مستواه تحت الضغط
